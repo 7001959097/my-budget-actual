@@ -1,19 +1,12 @@
-MY BUDGET VS ACTUAL — VERSION 1.2 (PWA)
+My Budget vs Actual v1.3 PWA
 
-Files:
-- index.html: app
-- manifest.webmanifest: install information
-- sw.js: offline cache
-- icons/: app icons
+Offline-first monthly budget tracker with Cashbook.
+- Existing Category, Item, Expense and Savings/Investment budgets and actuals are preserved.
+- Fixed Expense budgets carry forward automatically to later months.
+- Cashbook supports Opening Balance, Salary/Income, Advance Received, Loan Repayment, Money Lent, Daily Expense and other Credit/Debit.
+- Closing balance automatically becomes the next month's Opening Balance.
+- Cashbook CSV exports all transactions with Credit, Debit and running balance.
+- Backup/Restore includes all existing budget data and new Cashbook data.
+- Data is stored locally in the browser. Use Backup/Restore to transfer between devices.
 
-HOSTING:
-Upload all files and folders in this ZIP to the ROOT of a GitHub repository.
-Enable GitHub Pages from Settings > Pages > Deploy from a branch > main > /(root).
-
-After the site is published, open its HTTPS URL in Chrome on Android.
-Use Chrome menu > Install app (or Add to Home screen).
-
-DATA:
-All budget data stays in the browser/device. Each person using the shared link
-has separate local data. Use Backup and Restore to move data between devices.
-Do not put personal backup JSON files in the public GitHub repository.
+To update GitHub Pages, upload/replace the repository files with this ZIP's contents.
