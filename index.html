@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#14532d"><meta name="description" content="Offline monthly budget vs actual tracker"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="./icons/icon-192.png"><title>My Budget vs Actual</title>
+<style>
+:root{--g:#166534;--g2:#15803d;--bg:#f4f7f4;--card:#fff;--tx:#17231b;--muted:#647067;--line:#e1e8e1;--red:#b91c1c;--blue:#1d4ed8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Noto Sans Bengali",sans-serif}
+header{background:linear-gradient(120deg,#14532d,#15803d);color:white;padding:20px max(15px,calc((100% - 1120px)/2))}h1{font-size:23px;margin:0}header p{margin:4px 0 0;color:#dcfce7}
+main{max-width:1120px;margin:18px auto;padding:0 14px 40px}.toolbar{display:grid;grid-template-columns:1fr auto auto;gap:9px;align-items:end;margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:650;margin-bottom:5px}input,select{width:100%;min-height:41px;padding:9px 10px;border:1px solid #cbd5cb;border-radius:9px;background:white;font:inherit}
+button{border:0;border-radius:9px;padding:10px 13px;min-height:39px;background:var(--g);color:white;font:inherit;font-weight:650;cursor:pointer}button.secondary{background:#e8f1e9;color:#14532d;border:1px solid #c9ddcb}button.danger{background:#fee2e2;color:#991b1b}button.tiny{min-height:29px;padding:5px 8px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px;box-shadow:0 2px 8px #18351b08}
+.cap{font-size:12px;color:var(--muted)}.value{font-size:22px;font-weight:800;margin-top:4px}.green{color:var(--g2)}.red{color:var(--red)}.blue{color:var(--blue)}
+.panel{margin-bottom:14px}.panel h2{font-size:17px;margin:0 0 12px}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.tabs button{background:#e8eee8;color:#314236}.tabs button.active{background:var(--g);color:white}
+.forms{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px 7px;border-bottom:1px solid var(--line)}th{font-size:12px;color:var(--muted)}.num{text-align:right;white-space:nowrap}.wrap{overflow-x:auto}.empty{text-align:center;color:var(--muted);padding:20px}.pill{display:inline-block;border-radius:99px;padding:3px 8px;font-size:11px;background:#edf7ee;color:#166534}.pill.inv{background:#eff6ff;color:#1d4ed8}.note{font-size:12px;color:var(--muted);margin-top:8px}.hidden{display:none!important}
+.progress{height:8px;background:#e8eee8;border-radius:99px;overflow:hidden;margin-top:7px}.progress span{display:block;height:100%;background:#16a34a;width:0}
+@media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}.forms{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.toolbar .month{grid-column:1/-1}}
+@media(max-width:400px){.value{font-size:19px}.card,.panel{padding:11px}}
+</style></head>
+<body>
+<header><h1>My Budget vs Actual</h1><p>Monthly Budget · Actual Expense · Savings & Investment</p></header>
+<main>
+<div class="toolbar"><div class="month"><label>মাস নির্বাচন করুন</label><input id="month" type="month"></div><button class="secondary" id="backup">Backup</button><button class="secondary" id="restore">Restore</button><input id="file" type="file" accept=".json,application/json" class="hidden"></div>
+<div class="grid">
+<div class="card"><div class="cap">Expense Budget</div><div class="value" id="eb">₹0</div></div>
+<div class="card"><div class="cap">Actual Expense</div><div class="value" id="ea">₹0</div></div>
+<div class="card"><div class="cap">Investment Budget</div><div class="value blue" id="ib">₹0</div></div>
+<div class="card"><div class="cap">Actual Investment</div><div class="value blue" id="ia">₹0</div></div>
+</div>
+<div class="grid">
+<div class="card"><div class="cap">Expense Remaining</div><div class="value green" id="er">₹0</div></div>
+<div class="card"><div class="cap">Investment Remaining</div><div class="value blue" id="ir">₹0</div></div>
+<div class="card"><div class="cap">Total Outflow</div><div class="value" id="out">₹0</div></div>
+<div class="card"><div class="cap">Total Items</div><div class="value" id="count">0</div></div>
+</div>
+<div class="tabs">
+<button class="active" data-tab="overview">Overview</button><button data-tab="items">Category & Items</button><button data-tab="budget">Set Budget</button><button data-tab="entry">Add Actual</button><button data-tab="history">History</button>
+</div>
+<section id="overview" class="tab">
+<div class="panel"><h2>Expense Budget vs Actual</h2><div class="wrap"><table><thead><tr><th>Category / Item</th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Remaining</th></tr></thead><tbody id="expenseOverview"></tbody></table></div></div>
+<div class="panel"><h2>Savings & Investment Budget vs Actual</h2><div class="wrap"><table><thead><tr><th>Category / Item</th><th class="num">Budget</th><th class="num">Actual</th><th class="num">Remaining</th></tr></thead><tbody id="investOverview"></tbody></table></div><p class="note">PPF, Share Market, Family Savings ইত্যাদি এখানে আলাদা Investment হিসেবে থাকবে; সাধারণ Expense-এর সঙ্গে মেশানো হবে না।</p></div>
+</section>
+<section id="items" class="tab hidden">
+<div class="forms">
+<div class="panel"><h2>নতুন Category তৈরি করুন</h2><form id="catForm"><label>Category Name</label><input id="catName" placeholder="যেমন: EMI / Savings" required><label style="margin-top:9px">Category Type</label><select id="catType"><option value="expense">Expense</option><option value="investment">Savings / Investment</option></select><div class="actions"><button>Save Category</button></div></form></div>
+<div class="panel"><h2>Category-তে নতুন Item যোগ করুন</h2><form id="itemForm"><label>Category</label><select id="itemCat" required></select><label style="margin-top:9px">Item Name</label><input id="itemName" placeholder="যেমন: Home Loan EMI / PPF" required><div class="actions"><button>Add Item</button></div></form></div>
+</div>
+<div class="panel"><h2>আপনার Category ও Items</h2><div id="categoryList"></div><p class="note">একটি Category-র মধ্যে অনেকগুলো Item রাখতে পারবেন। Delete করলে পুরোনো হিসাবের রেকর্ড রাখা হবে; Item-টি শুধু নতুন এন্ট্রির তালিকা থেকে নিষ্ক্রিয় হবে।</p></div>
+</section>
+<section id="budget" class="tab hidden">
+<div class="panel"><h2>প্রতি মাসের Item-wise Budget</h2><form id="budgetForm"><div class="row"><div><label>Item</label><select id="budgetItem" required></select></div><div><label>Budget Amount (₹)</label><input id="budgetAmount" type="number" min="0" step=".01" required></div></div><div class="actions"><button>Save / Update Budget</button></div></form><p class="note">Expense এবং Investment-এর Budget আলাদা হিসাব হবে।</p></div>
+<div class="panel"><h2>এই মাসের Budget</h2><div class="wrap"><table><thead><tr><th>Type</th><th>Category / Item</th><th class="num">Budget</th></tr></thead><tbody id="budgetRows"></tbody></table></div></div>
+</section>
+<section id="entry" class="tab hidden">
+<div class="panel"><h2>Actual Expense / Investment Entry</h2><form id="actualForm"><div class="row"><div><label>Date</label><input id="date" type="date" required></div><div><label>Item</label><select id="actualItem" required></select></div></div><div class="row" style="margin-top:9px"><div><label>Actual Amount (₹)</label><input id="amount" type="number" min=".01" step=".01" required></div><div><label>Note (Optional)</label><input id="note" placeholder="বিস্তারিত"></div></div><div class="actions"><button>Save Entry</button><button type="reset" class="secondary">Clear</button></div></form><p class="note">যে Item বেছে নেবেন, তার Category Type অনুযায়ী Expense অথবা Investment-এ যোগ হবে।</p></div>
+</section>
+<section id="history" class="tab hidden">
+<div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>এই মাসের হিসাব</h2><button class="secondary" id="csv">Export CSV</button></div><div class="wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Category / Item</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody id="historyRows"></tbody></table></div></div>
+</section>
+<p class="note">ডেটা এই Browser/ডিভাইসে সেভ হয়। PC ও Mobile-এর মধ্যে ডেটা নিতে Backup ও Restore ব্যবহার করুন। Restore করলে ওই ডিভাইসের বর্তমান ডেটা প্রতিস্থাপিত হবে।</p>
+</main>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),KEY='budgetActual_v1_1';
+const today=new Date(),ym=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+$('month').value=ym;$('date').value=today.toISOString().slice(0,10);
+let db=read();
+function read(){try{let d=JSON.parse(localStorage.getItem(KEY));if(d&&d.categories&&d.items&&d.budgets&&d.entries)return d}catch(e){}return {categories:[],items:[],budgets:{},entries:[]}}
+function persist(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function m(){return $('month').value||ym}
+function activeItems(){return db.items.filter(x=>x.active!==false)}
+function item(id){return db.items.find(x=>x.id===id)}
+function cat(id){return db.categories.find(x=>x.id===id)}
+function typeOf(id){let c=cat(item(id)?.catId);return c?.type||'expense'}
+function budgets(){return db.budgets[m()]||{}}
+function entries(){return db.entries.filter(x=>x.date.slice(0,7)===m())}
+function sum(list,fn){return list.reduce((s,x)=>s+Number(fn(x)||0),0)}
+function actual(id){return sum(entries().filter(x=>x.itemId===id),x=>x.amount)}
+function money(v){return '₹'+Number(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function opts(){let html=activeItems().map(i=>`<option value="${i.id}">${esc(cat(i.catId)?.name||'')} — ${esc(i.name)} (${typeOf(i.id)==='investment'?'Investment':'Expense'})</option>`).join('');['itemCat','budgetItem','actualItem'].forEach(id=>$(id).innerHTML=id==='itemCat'?db.categories.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.type==='investment'?'Investment':'Expense'})</option>`).join(''):html)}
+function render(){
+ opts();let its=activeItems(),bs=budgets(),es=entries();
+ let expItems=its.filter(i=>typeOf(i.id)==='expense'),invItems=its.filter(i=>typeOf(i.id)==='investment');
+ const total=(arr,fn)=>sum(arr,fn);
+ let eb=total(expItems,i=>bs[i.id]),ib=total(invItems,i=>bs[i.id]),ea=total(es.filter(x=>typeOf(x.itemId)==='expense'),x=>x.amount),ia=total(es.filter(x=>typeOf(x.itemId)==='investment'),x=>x.amount);
+ $('eb').textContent=money(eb);$('ea').textContent=money(ea);$('ib').textContent=money(ib);$('ia').textContent=money(ia);$('er').textContent=money(eb-ea);$('ir').textContent=money(ib-ia);$('er').className='value '+(eb-ea<0?'red':'green');$('ir').className='value blue';$('out').textContent=money(ea+ia);$('count').textContent=its.length;
+ function table(arr){return arr.map(i=>{let b=Number(bs[i.id]||0),a=actual(i.id),r=b-a;return `<tr><td>${esc(cat(i.catId)?.name)} / ${esc(i.name)}</td><td class="num">${money(b)}</td><td class="num">${money(a)}</td><td class="num ${r<0?'red':'green'}">${money(r)}</td></tr>`}).join('')||'<tr><td colspan="4" class="empty">কোনো Item নেই। Category & Items থেকে তৈরি করুন।</td></tr>'}
+ $('expenseOverview').innerHTML=table(expItems);$('investOverview').innerHTML=table(invItems);
+ $('budgetRows').innerHTML=its.filter(i=>bs[i.id]!==undefined).map(i=>`<tr><td><span class="pill ${typeOf(i.id)==='investment'?'inv':''}">${typeOf(i.id)==='investment'?'Investment':'Expense'}</span></td><td>${esc(cat(i.catId)?.name)} / ${esc(i.name)}</td><td class="num">${money(bs[i.id])}</td></tr>`).join('')||'<tr><td colspan="3" class="empty">এই মাসে Budget দেওয়া হয়নি।</td></tr>';
+ $('categoryList').innerHTML=db.categories.map(c=>{let list=db.items.filter(i=>i.catId===c.id&&i.active!==false);return `<div style="border:1px solid var(--line);border-radius:10px;padding:11px;margin:8px 0"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><strong>${esc(c.name)}</strong><span class="pill ${c.type==='investment'?'inv':''}">${c.type==='investment'?'Savings / Investment':'Expense'}</span></div>${list.map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)"><span>${esc(i.name)}</span><button class="tiny danger" data-disable="${i.id}">Remove</button></div>`).join('')||'<p class="note">এখনও কোনো Item নেই।</p>'}</div>`}).join('')||'<div class="empty">এখনও Category তৈরি হয়নি।</div>';
+ $('historyRows').innerHTML=[...es].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{let i=item(x.itemId),c=cat(i?.catId),t=c?.type||'expense';return `<tr><td>${esc(x.date)}</td><td><span class="pill ${t==='investment'?'inv':''}">${t==='investment'?'Investment':'Expense'}</span></td><td>${esc(c?.name||'Removed')} / ${esc(i?.name||'Item')}</td><td>${esc(x.note)}</td><td class="num">${money(x.amount)}</td><td><button class="tiny danger" data-delete="${x.id}">Delete</button></td></tr>`}).join('')||'<tr><td colspan="6" class="empty">এই মাসে কোনো এন্ট্রি নেই।</td></tr>';
+}
+$('catForm').onsubmit=e=>{e.preventDefault();let name=$('catName').value.trim(),type=$('catType').value;if(!name)return;if(db.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){alert('এই Category আগে থেকেই আছে।');return}db.categories.push({id:crypto.randomUUID(),name,type});e.target.reset();persist()};
+$('itemForm').onsubmit=e=>{e.preventDefault();let catId=$('itemCat').value,name=$('itemName').value.trim();if(!catId||!name)return;if(db.items.some(i=>i.catId===catId&&i.name.toLowerCase()===name.toLowerCase()&&i.active!==false)){alert('এই Category-তে Item-টি আগে থেকেই আছে।');return}db.items.push({id:crypto.randomUUID(),catId,name,active:true});e.target.reset();persist()};
+$('budgetForm').onsubmit=e=>{e.preventDefault();let id=$('budgetItem').value,amount=Number($('budgetAmount').value);if(!id||amount<0)return;db.budgets[m()]??={};db.budgets[m()][id]=amount;e.target.reset();persist()};
+$('actualForm').onsubmit=e=>{e.preventDefault();let itemId=$('actualItem').value,date=$('date').value,amount=Number($('amount').value);if(!itemId||!date||amount<=0)return;db.entries.push({id:crypto.randomUUID(),itemId,date,amount,note:$('note').value.trim()});e.target.reset();$('date').value=today.toISOString().slice(0,10);persist()};
+document.addEventListener('click',e=>{let d=e.target.closest('[data-disable]'),x=e.target.closest('[data-delete]');if(d&&confirm('Item-টি নতুন Entry-র তালিকা থেকে সরাবেন? পুরোনো হিসাব থাকবে।')){let i=item(d.dataset.disable);if(i)i.active=false;persist()}if(x&&confirm('এই Entry মুছে ফেলবেন?')){db.entries=db.entries.filter(v=>v.id!==x.dataset.delete);persist()}});
+$('month').onchange=render;
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab))});
+$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.1',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
+$('restore').onclick=()=>$('file').click();
+$('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let j=JSON.parse(await f.text()),d=j.data;if(!d||!Array.isArray(d.categories)||!Array.isArray(d.items)||!d.budgets||!Array.isArray(d.entries))throw 0;if(confirm('Restore করলে এই ডিভাইসের বর্তমান ডেটা Backup-এর ডেটা দিয়ে বদলে যাবে। আগে Backup রাখুন। চালাবেন?')){db=d;persist();alert('Restore সম্পন্ন হয়েছে।')}}catch(_){alert('সঠিক Budget App Backup JSON নির্বাচন করুন।')}e.target.value=''};
+$('csv').onclick=()=>{let rows=[['Date','Type','Category','Item','Note','Amount'],...entries().map(x=>{let i=item(x.itemId),c=cat(i?.catId);return [x.date,c?.type||'',c?.name||'',i?.name||'',x.note,x.amount]})];let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'budget-history-'+m()+'.csv')};
+function download(blob,name){let a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+render();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Offline setup:', err));
+  });
+}
+</script>
+</body></html>
