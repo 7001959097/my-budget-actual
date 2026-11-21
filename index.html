@@ -36,6 +36,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <div class="card"><div class="cap">Total Items</div><div class="value" id="count">0</div></div>
 </div>
 <div class="grid">
+<div class="card"><div class="cap">Daily Expenses</div><div class="value red" id="cbDailyExpense">₹0</div></div>
 <div class="card"><div class="cap">Daily Activities</div><div class="value blue" id="cbBalance">0</div></div>
 </div>
 <div class="tabs">
@@ -111,7 +112,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function opts(){let html=activeItems().map(i=>`<option value="${i.id}">${esc(cat(i.catId)?.name||'')} — ${esc(i.name)} (${typeOf(i.id)==='investment'?'Investment':'Expense'})</option>`).join('');['itemCat','budgetItem','actualItem'].forEach(id=>$(id).innerHTML=id==='itemCat'?db.categories.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.type==='investment'?'Investment':'Expense'})</option>`).join(''):html)}
 function render(){
  opts();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
- let cb=cashTotals(m());$('cbBalance').textContent=String(cashEntries().length);
+ let cb=cashTotals(m());let cbList=cashEntries();$('cbBalance').textContent=String(cbList.length);$('cbDailyExpense').textContent=money(sum(cbList.filter(x=>!isCredit(x.type)),x=>x.amount));
  let expItems=its.filter(i=>typeOf(i.id)==='expense'),invItems=its.filter(i=>typeOf(i.id)==='investment');
  const total=(arr,fn)=>sum(arr,fn);
  let eb=total(expItems,i=>bs[i.id]),ib=total(invItems,i=>bs[i.id]),ea=total(es.filter(x=>typeOf(x.itemId)==='expense'),x=>x.amount),ia=total(es.filter(x=>typeOf(x.itemId)==='investment'),x=>x.amount);
