@@ -37,6 +37,10 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <div class="card"><div class="cap">Total Transaction</div><div class="value" id="cbTotalTransaction">₹0</div></div>
 <div class="card"><div class="cap">Total Activities</div><div class="value blue" id="cbActivities">0</div></div>
 </div>
+<div class="panel" id="reminderPanel" style="display:none;border-color:#f0c36d;background:#fffaf0">
+<h2>আগামীকালের Reminder</h2><div id="reminderList"></div>
+<p class="note">গত মাসের Actual Entry থেকে মাসিক এবং গত বছরের একই তারিখের Entry থেকে বার্ষিক Reminder তৈরি হয়। Reminder দেখতে অ্যাপ খুলতে হবে।</p>
+</div>
 <div class="tabs">
 <button class="active" data-tab="overview">Overview</button><button data-tab="items">Category & Items</button><button data-tab="budget">Set Budget</button><button data-tab="entry">Add Actual</button><button data-tab="history">History</button><button data-tab="cashbook">Cashbook</button>
 </div>
@@ -108,9 +112,29 @@ function sum(list,fn){return list.reduce((s,x)=>s+Number(fn(x)||0),0)}
 function actual(id){return sum(entries().filter(x=>x.itemId===id),x=>x.amount)}
 function money(v){return '₹'+Number(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function localDateString(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function renderReminders(){
+ const tomorrow=new Date();tomorrow.setHours(0,0,0,0);tomorrow.setDate(tomorrow.getDate()+1);
+ const yy=tomorrow.getFullYear(),mm=tomorrow.getMonth()+1,dd=tomorrow.getDate();
+ const prevMonth=new Date(yy,mm-2,1),prevMonthKey=prevMonth.getFullYear()+'-'+String(prevMonth.getMonth()+1).padStart(2,'0');
+ const prevMonthDays=new Date(yy,mm-1,0).getDate(),targetMonthDays=new Date(yy,mm,0).getDate();
+ const annualYear=yy-1,annualMonth=String(mm).padStart(2,'0');
+ const matches=[];
+ for(const it of activeItems()){
+  const history=(db.entries||[]).filter(e=>e.itemId===it.id&&typeof e.date==='string').sort((a,b)=>b.date.localeCompare(a.date));
+  const monthly=history.find(e=>{const [ey,em,ed]=e.date.split('-').map(Number);return e.date.slice(0,7)===prevMonthKey&&(ed===dd||(dd===targetMonthDays&&ed===prevMonthDays));});
+  const annual=history.find(e=>e.date.slice(0,4)===String(annualYear)&&e.date.slice(5,7)===annualMonth&&Number(e.date.slice(8,10))===dd);
+  const source=monthly||annual;
+  if(source){const c=cat(it.catId);matches.push({item:it,category:c,amount:source.amount,date:source.date,kind:monthly?'মাসিক':'বার্ষিক'});}
+ }
+ const panel=$('reminderPanel'),list=$('reminderList');
+ if(!matches.length){panel.style.display='none';list.innerHTML='';return;}
+ panel.style.display='block';
+ list.innerHTML=matches.map(r=>`<div style="padding:9px 0;border-bottom:1px solid #f2dfb5"><strong>${esc(r.item.name)}</strong> <span class="pill ${typeOf(r.item.id)==='investment'?'inv':''}">${typeOf(r.item.id)==='investment'?'Investment':'Budget'}</span><div>${esc(r.category?.name||'')} · ${r.kind} · আগের পেমেন্ট: ${esc(r.date)} · Amount: ${money(r.amount)}</div><div class="note">আগামীকাল ${localDateString(tomorrow)} তারিখে পেমেন্টের কথা মনে রাখুন।</div></div>`).join('');
+}
 function opts(){let html=activeItems().map(i=>`<option value="${i.id}">${esc(cat(i.catId)?.name||'')} — ${esc(i.name)} (${typeOf(i.id)==='investment'?'Investment':'Expense'})</option>`).join('');['itemCat','budgetItem','actualItem'].forEach(id=>$(id).innerHTML=id==='itemCat'?db.categories.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.type==='investment'?'Investment':'Expense'})</option>`).join(''):html)}
 function render(){
- opts();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
+ opts();renderReminders();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
  let cb=cashTotals(m());let cbList=cashEntries();$('cbActivities').textContent=String(cbList.length);$('cbDailyExpense').textContent=money(sum(cbList,cashDebitAmount));$('cbTotalTransaction').textContent=money(sum(cbList,x=>Math.abs(Number(x.amount)||0)));$('advanceReceived').textContent=money(sum(cbList.filter(x=>x.type==='advance'),x=>x.amount));$('advancePaid').textContent=money(sum(cbList.filter(x=>x.type==='advancePaid'),x=>x.amount));$('advanceRemaining').textContent=money(sum(cbList.filter(x=>x.type==='advance'),x=>x.amount)-sum(cbList.filter(x=>x.type==='advancePaid'),x=>x.amount));
  let expItems=its.filter(i=>typeOf(i.id)==='expense'),invItems=its.filter(i=>typeOf(i.id)==='investment');
  const total=(arr,fn)=>sum(arr,fn);

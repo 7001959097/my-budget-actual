@@ -1,4 +1,5 @@
-My Budget vs Actual PWA v1.9
+My Budget vs Actual PWA v1.10
 
-Dashboard updated to 12 summary cards in 3 columns: Expense Budget, Expense Actual, Remaining Expense Budget; Investment Budget, Investment Actual, Remaining Investment Budget; Advance Received, Advance Paid, Remaining Advance; Daily Expenses, Total Transaction, Total Activities.
-Cashbook adds Advance Paid as a transaction type. Existing local data key and storage format are preserved. Backup before replacing files.
+Added an in-app reminder panel shown one day before a recurring payment date. Monthly reminders use an Actual Entry from the previous month; annual reminders use an Actual Entry from the same date in the previous year. Reminder matching is based on Item. Existing localStorage key and data structure are preserved.
+
+Important: This is an in-app reminder. The app must be opened to see it; it does not send a push notification while closed. Back up your data before replacing the deployed files.
