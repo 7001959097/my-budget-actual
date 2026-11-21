@@ -1,4 +1,4 @@
-const CACHE_NAME = 'my-budget-actual-v1-7';
+const CACHE_NAME = 'my-budget-actual-v1-9';
 const APP_FILES = [
   './',
   './index.html',

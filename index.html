@@ -10,7 +10,7 @@ header{background:linear-gradient(120deg,#14532d,#15803d);color:white;padding:20
 main{max-width:1120px;margin:18px auto;padding:0 14px 40px}.toolbar{display:grid;grid-template-columns:1fr auto auto;gap:9px;align-items:end;margin-bottom:14px}
 label{display:block;font-size:13px;font-weight:650;margin-bottom:5px}input,select{width:100%;min-height:41px;padding:9px 10px;border:1px solid #cbd5cb;border-radius:9px;background:white;font:inherit}
 button{border:0;border-radius:9px;padding:10px 13px;min-height:39px;background:var(--g);color:white;font:inherit;font-weight:650;cursor:pointer}button.secondary{background:#e8f1e9;color:#14532d;border:1px solid #c9ddcb}button.danger{background:#fee2e2;color:#991b1b}button.tiny{min-height:29px;padding:5px 8px;font-size:12px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px;box-shadow:0 2px 8px #18351b08}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px;box-shadow:0 2px 8px #18351b08}
 .cap{font-size:12px;color:var(--muted)}.value{font-size:22px;font-weight:800;margin-top:4px}.green{color:var(--g2)}.red{color:var(--red)}.blue{color:var(--blue)}
 .panel{margin-bottom:14px}.panel h2{font-size:17px;margin:0 0 12px}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.tabs button{background:#e8eee8;color:#314236}.tabs button.active{background:var(--g);color:white}
 .forms{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -23,21 +23,19 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <header><h1>My Budget vs Actual</h1><p>Monthly Budget · Actual Expense · Savings & Investment</p></header>
 <main>
 <div class="toolbar"><div class="month"><label>মাস নির্বাচন করুন</label><input id="month" type="month"></div><button class="secondary" id="backup">Backup</button><button class="secondary" id="restore">Restore</button><input id="file" type="file" accept=".json,application/json" class="hidden"></div>
-<div class="grid">
-<div class="card"><div class="cap">Expense Budget</div><div class="value" id="eb">₹0</div></div>
-<div class="card"><div class="cap">Actual Expense</div><div class="value" id="ea">₹0</div></div>
+<div class="grid dashboard-grid">
+<div class="card"><div class="cap">Expenses Budget</div><div class="value" id="eb">₹0</div></div>
+<div class="card"><div class="cap">Expenses Actual</div><div class="value" id="ea">₹0</div></div>
+<div class="card"><div class="cap">Remaining Expenses Budget</div><div class="value green" id="er">₹0</div></div>
 <div class="card"><div class="cap">Investment Budget</div><div class="value blue" id="ib">₹0</div></div>
-<div class="card"><div class="cap">Actual Investment</div><div class="value blue" id="ia">₹0</div></div>
-</div>
-<div class="grid">
-<div class="card"><div class="cap">Expense Remaining</div><div class="value green" id="er">₹0</div></div>
-<div class="card"><div class="cap">Investment Remaining</div><div class="value blue" id="ir">₹0</div></div>
-<div class="card"><div class="cap">Total Outflow</div><div class="value" id="out">₹0</div></div>
-<div class="card"><div class="cap">Total Items</div><div class="value" id="count">0</div></div>
-</div>
-<div class="grid">
+<div class="card"><div class="cap">Investment Actual</div><div class="value blue" id="ia">₹0</div></div>
+<div class="card"><div class="cap">Remaining Investment Budget</div><div class="value blue" id="ir">₹0</div></div>
+<div class="card"><div class="cap">Advance Received</div><div class="value green" id="advanceReceived">₹0</div></div>
+<div class="card"><div class="cap">Advance Paid</div><div class="value red" id="advancePaid">₹0</div></div>
+<div class="card"><div class="cap">Remaining Advance</div><div class="value" id="advanceRemaining">₹0</div></div>
 <div class="card"><div class="cap">Daily Expenses</div><div class="value red" id="cbDailyExpense">₹0</div></div>
-<div class="card"><div class="cap">Daily Activities</div><div class="value blue" id="cbBalance">0</div></div>
+<div class="card"><div class="cap">Total Transaction</div><div class="value" id="cbTotalTransaction">₹0</div></div>
+<div class="card"><div class="cap">Total Activities</div><div class="value blue" id="cbActivities">0</div></div>
 </div>
 <div class="tabs">
 <button class="active" data-tab="overview">Overview</button><button data-tab="items">Category & Items</button><button data-tab="budget">Set Budget</button><button data-tab="entry">Add Actual</button><button data-tab="history">History</button><button data-tab="cashbook">Cashbook</button>
@@ -64,7 +62,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>এই মাসের হিসাব</h2><button class="secondary" id="csv">Export CSV</button></div><div class="wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Category / Item</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody id="historyRows"></tbody></table></div></div>
 </section>
 <section id="cashbook" class="tab hidden">
-<div class="panel"><h2>Cashbook Entry</h2><form id="cashForm"><div class="row"><div><label>Date</label><input id="cashDate" type="date" required></div><div><label>Transaction Type</label><select id="cashType"><option value="advance">Advance Received</option><option value="repayment">Loan Repayment Received</option><option value="otherCredit">Other Received</option><option value="lent">Money Lent</option><option value="daily">Daily Expense</option><option value="otherDebit">Other Expense</option></select></div></div><div class="row" style="margin-top:9px"><div><label>Details / Person / Category</label><input id="cashDetails" placeholder="যেমন: Raju / Food / Advance" required></div><div><label>Amount (₹)</label><input id="cashAmount" type="number" min=".01" step=".01" required></div></div><div style="margin-top:9px"><label>Note (Optional)</label><input id="cashNote" placeholder="বিস্তারিত"></div><div class="actions"><button>Save Cashbook Entry</button><button type="reset" class="secondary">Clear</button></div></form><p class="note">যাকে টাকা ধার দিলেন = Debit; ধার ফেরত পেলেন = Credit; কেউ Advance দিলে = Credit; দৈনিক খরচ = Debit।</p></div>
+<div class="panel"><h2>Cashbook Entry</h2><form id="cashForm"><div class="row"><div><label>Date</label><input id="cashDate" type="date" required></div><div><label>Transaction Type</label><select id="cashType"><option value="advance">Advance Received</option><option value="advancePaid">Advance Paid</option><option value="repayment">Loan Repayment Received</option><option value="otherCredit">Other Received</option><option value="lent">Money Lent</option><option value="daily">Daily Expense</option><option value="otherDebit">Other Expense</option></select></div></div><div class="row" style="margin-top:9px"><div><label>Details / Person / Category</label><input id="cashDetails" placeholder="যেমন: Raju / Food / Advance" required></div><div><label>Amount (₹)</label><input id="cashAmount" type="number" min=".01" step=".01" required></div></div><div style="margin-top:9px"><label>Note (Optional)</label><input id="cashNote" placeholder="বিস্তারিত"></div><div class="actions"><button>Save Cashbook Entry</button><button type="reset" class="secondary">Clear</button></div></form><p class="note">যাকে টাকা ধার দিলেন = Debit; ধার ফেরত পেলেন = Credit; কেউ Advance দিলে = Credit; দৈনিক খরচ = Debit।</p></div>
 <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>এই মাসের Cashbook</h2><button class="secondary" id="cashCsv">Export Cashbook CSV</button></div><div class="wrap"><table><thead><tr><th>Date</th><th>Details</th><th class="num">Value</th><th class="num">Balance</th><th></th></tr></thead><tbody id="cashRows"></tbody></table></div></div>
 </section>
 <p class="note">ডেটা এই Browser/ডিভাইসে সেভ হয়। PC ও Mobile-এর মধ্যে ডেটা নিতে Backup ও Restore ব্যবহার করুন। Restore করলে ওই ডিভাইসের বর্তমান ডেটা প্রতিস্থাপিত হবে।</p>
@@ -92,8 +90,9 @@ function budgets(){
  }
  return out;
 }
-function cashEntries(){return (db.cashbook||[]).filter(x=>x.date.slice(0,7)===m())}
-function isCredit(t){return ['advance','repayment','otherCredit'].includes(t)}
+function cashEntries(){return (db.cashbook||[]).filter(x=>x && typeof x.date==='string' && x.date.slice(0,7)===m() && x.type!=='salary')}
+function isCredit(t){return ['advance','repayment','otherCredit'].includes(String(t||'').trim())}
+function cashDebitAmount(x){return isCredit(x.type)?0:Math.abs(Number(x.amount)||0)}
 function cashOpening(month){
  return sum((db.cashbook||[]).filter(x=>x.date.slice(0,7)<month),x=>isCredit(x.type)?x.amount:-Number(x.amount||0));
 }
@@ -102,7 +101,7 @@ function cashTotals(month){
  const credit=sum(list.filter(x=>isCredit(x.type)),x=>x.amount), debit=sum(list.filter(x=>!isCredit(x.type)),x=>x.amount);
  return {opening:cashOpening(month),credit,debit,balance:cashOpening(month)+credit-debit};
 }
-function cashTypeLabel(t){return ({advance:'Advance Received',repayment:'Loan Repayment',otherCredit:'Other Credit',lent:'Money Lent',daily:'Daily Expense',otherDebit:'Other Debit'})[t]||t}
+function cashTypeLabel(t){return ({advance:'Advance Received',advancePaid:'Advance Paid',repayment:'Loan Repayment',otherCredit:'Other Credit',lent:'Money Lent',daily:'Daily Expense',otherDebit:'Other Debit'})[t]||t}
 
 function entries(){return db.entries.filter(x=>x.date.slice(0,7)===m())}
 function sum(list,fn){return list.reduce((s,x)=>s+Number(fn(x)||0),0)}
@@ -112,7 +111,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function opts(){let html=activeItems().map(i=>`<option value="${i.id}">${esc(cat(i.catId)?.name||'')} — ${esc(i.name)} (${typeOf(i.id)==='investment'?'Investment':'Expense'})</option>`).join('');['itemCat','budgetItem','actualItem'].forEach(id=>$(id).innerHTML=id==='itemCat'?db.categories.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.type==='investment'?'Investment':'Expense'})</option>`).join(''):html)}
 function render(){
  opts();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
- let cb=cashTotals(m());let cbList=cashEntries();$('cbBalance').textContent=String(cbList.length);$('cbDailyExpense').textContent=money(sum(cbList.filter(x=>!isCredit(x.type)),x=>x.amount));
+ let cb=cashTotals(m());let cbList=cashEntries();$('cbActivities').textContent=String(cbList.length);$('cbDailyExpense').textContent=money(sum(cbList,cashDebitAmount));$('cbTotalTransaction').textContent=money(sum(cbList,x=>Math.abs(Number(x.amount)||0)));$('advanceReceived').textContent=money(sum(cbList.filter(x=>x.type==='advance'),x=>x.amount));$('advancePaid').textContent=money(sum(cbList.filter(x=>x.type==='advancePaid'),x=>x.amount));$('advanceRemaining').textContent=money(sum(cbList.filter(x=>x.type==='advance'),x=>x.amount)-sum(cbList.filter(x=>x.type==='advancePaid'),x=>x.amount));
  let expItems=its.filter(i=>typeOf(i.id)==='expense'),invItems=its.filter(i=>typeOf(i.id)==='investment');
  const total=(arr,fn)=>sum(arr,fn);
  let eb=total(expItems,i=>bs[i.id]),ib=total(invItems,i=>bs[i.id]),ea=total(es.filter(x=>typeOf(x.itemId)==='expense'),x=>x.amount),ia=total(es.filter(x=>typeOf(x.itemId)==='investment'),x=>x.amount);
@@ -137,7 +136,7 @@ $('budgetItem').onchange=()=>{$('fixedBudget').checked=!!item($('budgetItem').va
 $('month').onchange=render;
 
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab))});
-$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.6',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
+$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.9',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
 $('restore').onclick=()=>$('file').click();
 $('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let j=JSON.parse(await f.text()),d=j.data;if(!d||!Array.isArray(d.categories)||!Array.isArray(d.items)||!d.budgets||!Array.isArray(d.entries))throw 0;d.cashbook??=[];d.cashbook=d.cashbook.filter(x=>x.type!=='salary');d.cashbookStartMonth='';d.cashbookInitialBalance=0;if(confirm('Restore করলে এই ডিভাইসের বর্তমান ডেটা Backup-এর ডেটা দিয়ে বদলে যাবে। আগে Backup রাখুন। চালাবেন?')){db=d;persist();alert('Restore সম্পন্ন হয়েছে।')}}catch(_){alert('সঠিক Budget App Backup JSON নির্বাচন করুন।')}e.target.value=''};
 $('cashCsv').onclick=()=>{let all=[...(db.cashbook||[])].filter(x=>x.type!=='salary').sort((a,b)=>a.date.localeCompare(b.date));let rows=[['Date','Details','Value','Note']];for(const x of all){rows.push([x.date,x.details,Number(x.amount),x.note||''])}let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'cashbook-all.csv')};
