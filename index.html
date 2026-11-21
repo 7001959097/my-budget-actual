@@ -36,7 +36,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <div class="card"><div class="cap">Total Items</div><div class="value" id="count">0</div></div>
 </div>
 <div class="grid">
-<div class="card"><div class="cap">Available Balance</div><div class="value blue" id="cbBalance">₹0.00</div></div>
+<div class="card"><div class="cap">Daily Activities</div><div class="value blue" id="cbBalance">0</div></div>
 </div>
 <div class="tabs">
 <button class="active" data-tab="overview">Overview</button><button data-tab="items">Category & Items</button><button data-tab="budget">Set Budget</button><button data-tab="entry">Add Actual</button><button data-tab="history">History</button><button data-tab="cashbook">Cashbook</button>
@@ -111,7 +111,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function opts(){let html=activeItems().map(i=>`<option value="${i.id}">${esc(cat(i.catId)?.name||'')} — ${esc(i.name)} (${typeOf(i.id)==='investment'?'Investment':'Expense'})</option>`).join('');['itemCat','budgetItem','actualItem'].forEach(id=>$(id).innerHTML=id==='itemCat'?db.categories.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.type==='investment'?'Investment':'Expense'})</option>`).join(''):html)}
 function render(){
  opts();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
- let cb=cashTotals(m());$('cbBalance').textContent=money(cb.balance);
+ let cb=cashTotals(m());$('cbBalance').textContent=String(cashEntries().length);
  let expItems=its.filter(i=>typeOf(i.id)==='expense'),invItems=its.filter(i=>typeOf(i.id)==='investment');
  const total=(arr,fn)=>sum(arr,fn);
  let eb=total(expItems,i=>bs[i.id]),ib=total(invItems,i=>bs[i.id]),ea=total(es.filter(x=>typeOf(x.itemId)==='expense'),x=>x.amount),ia=total(es.filter(x=>typeOf(x.itemId)==='investment'),x=>x.amount);
@@ -136,10 +136,10 @@ $('budgetItem').onchange=()=>{$('fixedBudget').checked=!!item($('budgetItem').va
 $('month').onchange=render;
 
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab))});
-$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.5',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
+$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.6',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
 $('restore').onclick=()=>$('file').click();
 $('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let j=JSON.parse(await f.text()),d=j.data;if(!d||!Array.isArray(d.categories)||!Array.isArray(d.items)||!d.budgets||!Array.isArray(d.entries))throw 0;d.cashbook??=[];d.cashbook=d.cashbook.filter(x=>x.type!=='salary');d.cashbookStartMonth='';d.cashbookInitialBalance=0;if(confirm('Restore করলে এই ডিভাইসের বর্তমান ডেটা Backup-এর ডেটা দিয়ে বদলে যাবে। আগে Backup রাখুন। চালাবেন?')){db=d;persist();alert('Restore সম্পন্ন হয়েছে।')}}catch(_){alert('সঠিক Budget App Backup JSON নির্বাচন করুন।')}e.target.value=''};
-$('cashCsv').onclick=()=>{let all=[...(db.cashbook||[])].filter(x=>x.type!=='salary').sort((a,b)=>a.date.localeCompare(b.date));let running=0;let rows=[['Date','Details','Value','Running Balance','Note']];for(const x of all){let cr=isCredit(x.type)?Number(x.amount):0,de=cr?0:Number(x.amount);running+=cr-de;rows.push([x.date,x.details,Number(x.amount),running,x.note||''])}let csv='\\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\\r\\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'cashbook-all.csv')};
+$('cashCsv').onclick=()=>{let all=[...(db.cashbook||[])].filter(x=>x.type!=='salary').sort((a,b)=>a.date.localeCompare(b.date));let rows=[['Date','Details','Value','Note']];for(const x of all){rows.push([x.date,x.details,Number(x.amount),x.note||''])}let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'cashbook-all.csv')};
 $('csv').onclick=()=>{let rows=[['Date','Type','Category','Item','Note','Amount'],...entries().map(x=>{let i=item(x.itemId),c=cat(i?.catId);return [x.date,c?.type||'',c?.name||'',i?.name||'',x.note,x.amount]})];let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'budget-history-'+m()+'.csv')};
 function download(blob,name){let a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 render();
