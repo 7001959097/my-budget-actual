@@ -36,7 +36,6 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <div class="card"><div class="cap">Total Items</div><div class="value" id="count">0</div></div>
 </div>
 <div class="grid">
-<div class="card"><div class="cap">Opening Balance</div><div class="value" id="cbOpening">₹0.00</div></div>
 <div class="card"><div class="cap">Total Credit</div><div class="value green" id="cbCredit">₹0.00</div></div>
 <div class="card"><div class="cap">Total Debit</div><div class="value red" id="cbDebit">₹0.00</div></div>
 <div class="card"><div class="cap">Available Balance</div><div class="value blue" id="cbBalance">₹0.00</div></div>
@@ -66,8 +65,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>এই মাসের হিসাব</h2><button class="secondary" id="csv">Export CSV</button></div><div class="wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Category / Item</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody id="historyRows"></tbody></table></div></div>
 </section>
 <section id="cashbook" class="tab hidden">
-<div class="panel"><h2>প্রথম Opening Balance সেট করুন</h2><form id="openingForm"><div class="row"><div><label>শুরুর মাস</label><input id="openingMonth" type="month" required></div><div><label>Opening Balance (₹)</label><input id="openingAmount" type="number" min="0" step=".01" required></div></div><div class="actions"><button>Save Opening Balance</button></div><p class="note">এই শুরুর মাসের পরের প্রতিটি মাসের Opening Balance আগের মাসের Closing Balance থেকে অটোমেটিক হবে। একবার সেট করলেই হবে।</p></form></div>
-<div class="panel"><h2>Cashbook Entry — Credit / Debit</h2><form id="cashForm"><div class="row"><div><label>Date</label><input id="cashDate" type="date" required></div><div><label>Transaction Type</label><select id="cashType"><option value="salary">Salary / Income (Credit)</option><option value="advance">Advance Received (Credit)</option><option value="repayment">Loan Repayment Received (Credit)</option><option value="otherCredit">Other Credit</option><option value="lent">Money Lent (Debit)</option><option value="daily">Daily Expense (Debit)</option><option value="otherDebit">Other Debit</option></select></div></div><div class="row" style="margin-top:9px"><div><label>Details / Person / Category</label><input id="cashDetails" placeholder="যেমন: Salary / Raju / Food" required></div><div><label>Amount (₹)</label><input id="cashAmount" type="number" min=".01" step=".01" required></div></div><div style="margin-top:9px"><label>Note (Optional)</label><input id="cashNote" placeholder="বিস্তারিত"></div><div class="actions"><button>Save Cashbook Entry</button><button type="reset" class="secondary">Clear</button></div></form><p class="note">যাকে টাকা ধার দিলেন = Debit; ধার ফেরত পেলেন = Credit; কেউ Advance দিলে = Credit; দৈনিক খরচ = Debit।</p></div>
+<div class="panel"><h2>Cashbook Entry — Credit / Debit</h2><form id="cashForm"><div class="row"><div><label>Date</label><input id="cashDate" type="date" required></div><div><label>Transaction Type</label><select id="cashType"><option value="advance">Advance Received (Credit)</option><option value="repayment">Loan Repayment Received (Credit)</option><option value="otherCredit">Other Credit</option><option value="lent">Money Lent (Debit)</option><option value="daily">Daily Expense (Debit)</option><option value="otherDebit">Other Debit</option></select></div></div><div class="row" style="margin-top:9px"><div><label>Details / Person / Category</label><input id="cashDetails" placeholder="যেমন: Raju / Food / Advance" required></div><div><label>Amount (₹)</label><input id="cashAmount" type="number" min=".01" step=".01" required></div></div><div style="margin-top:9px"><label>Note (Optional)</label><input id="cashNote" placeholder="বিস্তারিত"></div><div class="actions"><button>Save Cashbook Entry</button><button type="reset" class="secondary">Clear</button></div></form><p class="note">যাকে টাকা ধার দিলেন = Debit; ধার ফেরত পেলেন = Credit; কেউ Advance দিলে = Credit; দৈনিক খরচ = Debit।</p></div>
 <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>এই মাসের Cashbook</h2><button class="secondary" id="cashCsv">Export Credit / Debit CSV</button></div><div class="wrap"><table><thead><tr><th>Date</th><th>Details</th><th>Type</th><th class="num">Credit</th><th class="num">Debit</th><th class="num">Balance</th><th></th></tr></thead><tbody id="cashRows"></tbody></table></div></div>
 </section>
 <p class="note">ডেটা এই Browser/ডিভাইসে সেভ হয়। PC ও Mobile-এর মধ্যে ডেটা নিতে Backup ও Restore ব্যবহার করুন। Restore করলে ওই ডিভাইসের বর্তমান ডেটা প্রতিস্থাপিত হবে।</p>
@@ -76,10 +74,10 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 (()=>{
 const $=id=>document.getElementById(id),KEY='budgetActual_v1_1';
 const today=new Date(),ym=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
-$('month').value=ym;$('date').value=today.toISOString().slice(0,10);$('cashDate').value=today.toISOString().slice(0,10);$('openingMonth').value=ym;
-let db=read();db.cashbook??=[];db.cashbookStartMonth??='';db.cashbookInitialBalance??=0;
+$('month').value=ym;$('date').value=today.toISOString().slice(0,10);$('cashDate').value=today.toISOString().slice(0,10);
+let db=read();db.cashbook??=[];db.cashbook=db.cashbook.filter(x=>x.type!=='salary');db.cashbookStartMonth='';db.cashbookInitialBalance=0;db.categories.forEach(c=>{if((c.name||'').trim().toLowerCase()==='tran monthly')c.name='Train monthly'});db.items.forEach(i=>{if((i.name||'').trim().toLowerCase()==='tran monthly')i.name='Train monthly'});localStorage.setItem(KEY,JSON.stringify(db));
 function read(){try{let d=JSON.parse(localStorage.getItem(KEY));if(d&&d.categories&&d.items&&d.budgets&&d.entries)return d}catch(e){}return {categories:[],items:[],budgets:{},entries:[],cashbook:[],cashbookStartMonth:'',cashbookInitialBalance:0}}
-function persist(){db.cashbook??=[];db.cashbookStartMonth??='';db.cashbookInitialBalance??=0;localStorage.setItem(KEY,JSON.stringify(db));render()}
+function persist(){db.cashbook??=[];db.cashbook=db.cashbook.filter(x=>x.type!=='salary');db.cashbookStartMonth='';db.cashbookInitialBalance=0;localStorage.setItem(KEY,JSON.stringify(db));render()}
 function m(){return $('month').value||ym}
 function activeItems(){return db.items.filter(x=>x.active!==false)}
 function item(id){return db.items.find(x=>x.id===id)}
@@ -96,17 +94,16 @@ function budgets(){
  return out;
 }
 function cashEntries(){return (db.cashbook||[]).filter(x=>x.date.slice(0,7)===m())}
-function isCredit(t){return ['salary','advance','repayment','otherCredit'].includes(t)}
+function isCredit(t){return ['advance','repayment','otherCredit'].includes(t)}
 function cashOpening(month){
- if(!db.cashbookStartMonth || month<db.cashbookStartMonth) return 0;
- return Number(db.cashbookInitialBalance||0)+sum((db.cashbook||[]).filter(x=>x.date.slice(0,7)>=db.cashbookStartMonth&&x.date.slice(0,7)<month),x=>isCredit(x.type)?x.amount:-Number(x.amount||0));
+ return sum((db.cashbook||[]).filter(x=>x.date.slice(0,7)<month),x=>isCredit(x.type)?x.amount:-Number(x.amount||0));
 }
 function cashTotals(month){
  const list=(db.cashbook||[]).filter(x=>x.date.slice(0,7)===month);
  const credit=sum(list.filter(x=>isCredit(x.type)),x=>x.amount), debit=sum(list.filter(x=>!isCredit(x.type)),x=>x.amount);
  return {opening:cashOpening(month),credit,debit,balance:cashOpening(month)+credit-debit};
 }
-function cashTypeLabel(t){return ({salary:'Salary / Income',advance:'Advance Received',repayment:'Loan Repayment',otherCredit:'Other Credit',lent:'Money Lent',daily:'Daily Expense',otherDebit:'Other Debit'})[t]||t}
+function cashTypeLabel(t){return ({advance:'Advance Received',repayment:'Loan Repayment',otherCredit:'Other Credit',lent:'Money Lent',daily:'Daily Expense',otherDebit:'Other Debit'})[t]||t}
 
 function entries(){return db.entries.filter(x=>x.date.slice(0,7)===m())}
 function sum(list,fn){return list.reduce((s,x)=>s+Number(fn(x)||0),0)}
@@ -116,7 +113,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function opts(){let html=activeItems().map(i=>`<option value="${i.id}">${esc(cat(i.catId)?.name||'')} — ${esc(i.name)} (${typeOf(i.id)==='investment'?'Investment':'Expense'})</option>`).join('');['itemCat','budgetItem','actualItem'].forEach(id=>$(id).innerHTML=id==='itemCat'?db.categories.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.type==='investment'?'Investment':'Expense'})</option>`).join(''):html)}
 function render(){
  opts();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
- let cb=cashTotals(m());$('cbOpening').textContent=money(cb.opening);$('cbCredit').textContent=money(cb.credit);$('cbDebit').textContent=money(cb.debit);$('cbBalance').textContent=money(cb.balance);
+ let cb=cashTotals(m());$('cbCredit').textContent=money(cb.credit);$('cbDebit').textContent=money(cb.debit);$('cbBalance').textContent=money(cb.balance);
  let expItems=its.filter(i=>typeOf(i.id)==='expense'),invItems=its.filter(i=>typeOf(i.id)==='investment');
  const total=(arr,fn)=>sum(arr,fn);
  let eb=total(expItems,i=>bs[i.id]),ib=total(invItems,i=>bs[i.id]),ea=total(es.filter(x=>typeOf(x.itemId)==='expense'),x=>x.amount),ia=total(es.filter(x=>typeOf(x.itemId)==='investment'),x=>x.amount);
@@ -136,16 +133,15 @@ $('itemForm').onsubmit=e=>{e.preventDefault();let catId=$('itemCat').value,name=
 $('budgetForm').onsubmit=e=>{e.preventDefault();let id=$('budgetItem').value,amount=Number($('budgetAmount').value);if(!id||amount<0)return;db.budgets[m()]??={};db.budgets[m()][id]=amount;let bi=item(id);if(bi)bi.fixedBudget=$('fixedBudget').checked&&typeOf(id)==='expense';e.target.reset();persist()};
 $('actualForm').onsubmit=e=>{e.preventDefault();let itemId=$('actualItem').value,date=$('date').value,amount=Number($('amount').value);if(!itemId||!date||amount<=0)return;db.entries.push({id:crypto.randomUUID(),itemId,date,amount,note:$('note').value.trim()});e.target.reset();$('date').value=today.toISOString().slice(0,10);persist()};
 document.addEventListener('click',e=>{let d=e.target.closest('[data-disable]'),x=e.target.closest('[data-delete]'),cx=e.target.closest('[data-cashdelete]');if(d&&confirm('Item-টি নতুন Entry-র তালিকা থেকে সরাবেন? পুরোনো হিসাব থাকবে।')){let i=item(d.dataset.disable);if(i)i.active=false;persist()}if(x&&confirm('এই Entry মুছে ফেলবেন?')){db.entries=db.entries.filter(v=>v.id!==x.dataset.delete);persist()}if(cx&&confirm('এই Cashbook Entry মুছে ফেলবেন?')){db.cashbook=(db.cashbook||[]).filter(v=>v.id!==cx.dataset.cashdelete);persist()}});
-$('openingForm').onsubmit=e=>{e.preventDefault();const sm=$('openingMonth').value,amt=Number($('openingAmount').value);if(!sm||amt<0)return;if((db.cashbook||[]).some(x=>x.date.slice(0,7)<sm)){if(!confirm('এই শুরুর মাসের আগেও Cashbook Entry রয়েছে। Opening Balance বদলালে সেগুলি Balance-এ গণনা হবে না। চালাবেন?'))return;}db.cashbookStartMonth=sm;db.cashbookInitialBalance=amt;persist()};
-$('cashForm').onsubmit=e=>{e.preventDefault();let date=$('cashDate').value,type=$('cashType').value,details=$('cashDetails').value.trim(),amount=Number($('cashAmount').value);if(!date||!details||amount<=0)return;if(!db.cashbookStartMonth){alert('আগে Opening Balance সেট করুন।');return}if(date.slice(0,7)<db.cashbookStartMonth){alert('Entry-এর তারিখ Opening Balance শুরুর মাসের আগে হতে পারবে না।');return}db.cashbook??=[];db.cashbook.push({id:crypto.randomUUID(),date,type,details,amount,note:$('cashNote').value.trim()});e.target.reset();$('cashDate').value=today.toISOString().slice(0,10);persist()};
+$('cashForm').onsubmit=e=>{e.preventDefault();let date=$('cashDate').value,type=$('cashType').value,details=$('cashDetails').value.trim(),amount=Number($('cashAmount').value);if(!date||!details||amount<=0)return;db.cashbook??=[];db.cashbook.push({id:crypto.randomUUID(),date,type,details,amount,note:$('cashNote').value.trim()});e.target.reset();$('cashDate').value=today.toISOString().slice(0,10);persist()};
 $('budgetItem').onchange=()=>{$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget};
 $('month').onchange=render;
 
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab))});
-$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.3',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
+$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.4',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
 $('restore').onclick=()=>$('file').click();
-$('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let j=JSON.parse(await f.text()),d=j.data;if(!d||!Array.isArray(d.categories)||!Array.isArray(d.items)||!d.budgets||!Array.isArray(d.entries))throw 0;d.cashbook??=[];d.cashbookStartMonth??='';d.cashbookInitialBalance??=0;if(confirm('Restore করলে এই ডিভাইসের বর্তমান ডেটা Backup-এর ডেটা দিয়ে বদলে যাবে। আগে Backup রাখুন। চালাবেন?')){db=d;persist();alert('Restore সম্পন্ন হয়েছে।')}}catch(_){alert('সঠিক Budget App Backup JSON নির্বাচন করুন।')}e.target.value=''};
-$('cashCsv').onclick=()=>{let all=[...(db.cashbook||[])].filter(x=>!db.cashbookStartMonth||x.date.slice(0,7)>=db.cashbookStartMonth).sort((a,b)=>a.date.localeCompare(b.date));let running=Number(db.cashbookInitialBalance||0);let rows=[['Date','Details','Transaction Type','Credit','Debit','Running Balance','Note']];for(const x of all){let cr=isCredit(x.type)?Number(x.amount):0,de=cr?0:Number(x.amount);running+=cr-de;rows.push([x.date,x.details,cashTypeLabel(x.type),cr||'',de||'',running,x.note||''])}let csv='\\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\\r\\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'cashbook-credit-debit-all.csv')};
+$('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let j=JSON.parse(await f.text()),d=j.data;if(!d||!Array.isArray(d.categories)||!Array.isArray(d.items)||!d.budgets||!Array.isArray(d.entries))throw 0;d.cashbook??=[];d.cashbook=d.cashbook.filter(x=>x.type!=='salary');d.cashbookStartMonth='';d.cashbookInitialBalance=0;if(confirm('Restore করলে এই ডিভাইসের বর্তমান ডেটা Backup-এর ডেটা দিয়ে বদলে যাবে। আগে Backup রাখুন। চালাবেন?')){db=d;persist();alert('Restore সম্পন্ন হয়েছে।')}}catch(_){alert('সঠিক Budget App Backup JSON নির্বাচন করুন।')}e.target.value=''};
+$('cashCsv').onclick=()=>{let all=[...(db.cashbook||[])].filter(x=>x.type!=='salary').sort((a,b)=>a.date.localeCompare(b.date));let running=0;let rows=[['Date','Details','Transaction Type','Credit','Debit','Running Balance','Note']];for(const x of all){let cr=isCredit(x.type)?Number(x.amount):0,de=cr?0:Number(x.amount);running+=cr-de;rows.push([x.date,x.details,cashTypeLabel(x.type),cr||'',de||'',running,x.note||''])}let csv='\\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\\r\\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'cashbook-credit-debit-all.csv')};
 $('csv').onclick=()=>{let rows=[['Date','Type','Category','Item','Note','Amount'],...entries().map(x=>{let i=item(x.itemId),c=cat(i?.catId);return [x.date,c?.type||'',c?.name||'',i?.name||'',x.note,x.amount]})];let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'budget-history-'+m()+'.csv')};
 function download(blob,name){let a=document.createElement('a'),u=URL.createObjectURL(blob);a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 render();
