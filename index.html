@@ -68,6 +68,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <section id="cashbook" class="tab hidden">
 <div class="panel"><h2>Cashbook Entry</h2><form id="cashForm"><div class="row"><div><label>Date</label><input id="cashDate" type="date" required></div><div><label>Transaction Type</label><select id="cashType"><option value="advance">Advance Received</option><option value="advancePaid">Advance Paid</option><option value="advanceAdjust">Advance Adjusted</option><option value="repayment">Loan Repayment Received</option><option value="otherCredit">Other Received</option><option value="lent">Money Lent</option><option value="daily">Daily Expense</option><option value="otherDebit">Other Expense</option></select></div></div><div class="row" style="margin-top:9px"><div><label>Details / Person / Category</label><input id="cashDetails" placeholder="যেমন: Raju / Food / Advance" required></div><div><label>Amount (₹)</label><input id="cashAmount" type="number" min=".01" step=".01" required></div></div><div id="advanceAdjustFields" class="row hidden" style="margin-top:9px"><div><label>কোন Advance Adjust করবেন?</label><select id="advanceAdjustTarget"></select></div><div><label>Adjust Amount (₹)</label><input id="advanceAdjustAmount" type="number" min=".01" step=".01"></div></div><div style="margin-top:9px"><label>Note (Optional)</label><input id="cashNote" placeholder="বিস্তারিত"></div><div class="actions"><button>Save Cashbook Entry</button><button type="reset" class="secondary">Clear</button></div></form><p class="note">যাকে টাকা ধার দিলেন = Debit; ধার ফেরত পেলেন = Credit; কেউ Advance দিলে = Credit; দৈনিক খরচ = Debit। Advance Adjusted করলে Cash Balance বদলাবে না; সংশ্লিষ্ট Advance-এর বাকি টাকা কমবে।</p></div>
 <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>এই মাসের Cashbook</h2><button class="secondary" id="cashCsv">Export Cashbook CSV</button></div><div class="wrap"><table><thead><tr><th>Date</th><th>Details</th><th class="num">Value</th><th class="num">Balance</th><th></th></tr></thead><tbody id="cashRows"></tbody></table></div></div>
+<div class="panel"><h2>Outstanding Advance — বাকি Advance</h2><p class="note">আগের মাসসহ সব Advance এখানে দেখা যাবে। টাকা ফেরত বা Adjust না করা পর্যন্ত বাকি থাকবে।</p><div class="wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Person / Details</th><th class="num">Original</th><th class="num">Adjusted</th><th class="num">Outstanding</th></tr></thead><tbody id="advanceOutstandingRows"></tbody></table></div></div>
 </section>
 <p class="note">ডেটা এই Browser/ডিভাইসে সেভ হয়। PC ও Mobile-এর মধ্যে ডেটা নিতে Backup ও Restore ব্যবহার করুন। Restore করলে ওই ডিভাইসের বর্তমান ডেটা প্রতিস্থাপিত হবে।</p>
 </main>
@@ -106,6 +107,9 @@ function advanceOutstanding(x, uptoMonth='9999-99'){
 }
 function outstandingAdvances(type, uptoMonth='9999-99'){
  return sum((db.cashbook||[]).filter(x=>x.type===type),x=>advanceOutstanding(x,uptoMonth));
+}
+function outstandingAdvanceRows(uptoMonth=m()){
+ return (db.cashbook||[]).filter(x=>['advance','advancePaid'].includes(x.type)&&String(x.date||'').slice(0,7)<=uptoMonth).map(x=>({x,adjusted:adjustmentTotal(x.id,uptoMonth),remaining:advanceOutstanding(x,uptoMonth)})).filter(v=>v.remaining>0.009).sort((a,b)=>b.x.date.localeCompare(a.x.date));
 }
 function populateAdvanceAdjustTargets(){
  const sel=$('advanceAdjustTarget'); if(!sel)return;
@@ -169,6 +173,8 @@ function render(){
  const cs=[...cashEntries()].sort((a,b)=>a.date.localeCompare(b.date));
  let running=cb.opening;
  $('cashRows').innerHTML=cs.map(x=>{let cr=isCredit(x.type)?Number(x.amount):0,de=(cr||isAdvanceAdjustment(x))?0:Number(x.amount);running+=cr-de;let detail=isAdvanceAdjustment(x)?`${esc(x.details)} <span class="pill">Advance Adjusted</span>`:esc(x.details);return `<tr><td>${esc(x.date)}</td><td>${detail}</td><td class="num">${money(x.amount)}</td><td class="num">${money(running)}</td><td><button class="tiny danger" data-cashdelete="${x.id}">Delete</button></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">এই মাসে কোনো Cashbook Entry নেই।</td></tr>';
+ const outstanding=outstandingAdvanceRows(m());
+ $('advanceOutstandingRows').innerHTML=outstanding.map(v=>`<tr><td>${esc(v.x.date)}</td><td>${v.x.type==='advance'?'Advance Received':'Advance Paid'}</td><td>${esc(v.x.details||'')}</td><td class="num">${money(v.x.amount)}</td><td class="num">${money(v.adjusted)}</td><td class="num"><strong>${money(v.remaining)}</strong></td></tr>`).join('')||'<tr><td colspan="6" class="empty">কোনো Outstanding Advance নেই।</td></tr>';
 
 }
 $('catForm').onsubmit=e=>{e.preventDefault();let name=$('catName').value.trim(),type=$('catType').value;if(!name)return;if(db.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){alert('এই Category আগে থেকেই আছে।');return}db.categories.push({id:crypto.randomUUID(),name,type});e.target.reset();persist()};
