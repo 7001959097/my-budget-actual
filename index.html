@@ -66,7 +66,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>এই মাসের হিসাব</h2><button class="secondary" id="csv">Export CSV</button></div><div class="wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Category / Item</th><th>Note</th><th class="num">Amount</th><th></th></tr></thead><tbody id="historyRows"></tbody></table></div></div>
 </section>
 <section id="cashbook" class="tab hidden">
-<div class="panel"><h2>Cashbook Entry</h2><form id="cashForm"><div class="row"><div><label>Date</label><input id="cashDate" type="date" required></div><div><label>Transaction Type</label><select id="cashType"><option value="advance">Advance Received</option><option value="advancePaid">Advance Paid</option><option value="repayment">Loan Repayment Received</option><option value="otherCredit">Other Received</option><option value="lent">Money Lent</option><option value="daily">Daily Expense</option><option value="otherDebit">Other Expense</option></select></div></div><div class="row" style="margin-top:9px"><div><label>Details / Person / Category</label><input id="cashDetails" placeholder="যেমন: Raju / Food / Advance" required></div><div><label>Amount (₹)</label><input id="cashAmount" type="number" min=".01" step=".01" required></div></div><div style="margin-top:9px"><label>Note (Optional)</label><input id="cashNote" placeholder="বিস্তারিত"></div><div class="actions"><button>Save Cashbook Entry</button><button type="reset" class="secondary">Clear</button></div></form><p class="note">যাকে টাকা ধার দিলেন = Debit; ধার ফেরত পেলেন = Credit; কেউ Advance দিলে = Credit; দৈনিক খরচ = Debit।</p></div>
+<div class="panel"><h2>Cashbook Entry</h2><form id="cashForm"><div class="row"><div><label>Date</label><input id="cashDate" type="date" required></div><div><label>Transaction Type</label><select id="cashType"><option value="advance">Advance Received</option><option value="advancePaid">Advance Paid</option><option value="advanceAdjust">Advance Adjusted</option><option value="repayment">Loan Repayment Received</option><option value="otherCredit">Other Received</option><option value="lent">Money Lent</option><option value="daily">Daily Expense</option><option value="otherDebit">Other Expense</option></select></div></div><div class="row" style="margin-top:9px"><div><label>Details / Person / Category</label><input id="cashDetails" placeholder="যেমন: Raju / Food / Advance" required></div><div><label>Amount (₹)</label><input id="cashAmount" type="number" min=".01" step=".01" required></div></div><div id="advanceAdjustFields" class="row hidden" style="margin-top:9px"><div><label>কোন Advance Adjust করবেন?</label><select id="advanceAdjustTarget"></select></div><div><label>Adjust Amount (₹)</label><input id="advanceAdjustAmount" type="number" min=".01" step=".01"></div></div><div style="margin-top:9px"><label>Note (Optional)</label><input id="cashNote" placeholder="বিস্তারিত"></div><div class="actions"><button>Save Cashbook Entry</button><button type="reset" class="secondary">Clear</button></div></form><p class="note">যাকে টাকা ধার দিলেন = Debit; ধার ফেরত পেলেন = Credit; কেউ Advance দিলে = Credit; দৈনিক খরচ = Debit। Advance Adjusted করলে Cash Balance বদলাবে না; সংশ্লিষ্ট Advance-এর বাকি টাকা কমবে।</p></div>
 <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>এই মাসের Cashbook</h2><button class="secondary" id="cashCsv">Export Cashbook CSV</button></div><div class="wrap"><table><thead><tr><th>Date</th><th>Details</th><th class="num">Value</th><th class="num">Balance</th><th></th></tr></thead><tbody id="cashRows"></tbody></table></div></div>
 </section>
 <p class="note">ডেটা এই Browser/ডিভাইসে সেভ হয়। PC ও Mobile-এর মধ্যে ডেটা নিতে Backup ও Restore ব্যবহার করুন। Restore করলে ওই ডিভাইসের বর্তমান ডেটা প্রতিস্থাপিত হবে।</p>
@@ -96,16 +96,37 @@ function budgets(){
 }
 function cashEntries(){return (db.cashbook||[]).filter(x=>x && typeof x.date==='string' && x.date.slice(0,7)===m() && x.type!=='salary')}
 function isCredit(t){return ['advance','repayment','otherCredit'].includes(String(t||'').trim())}
-function cashDebitAmount(x){return isCredit(x.type)?0:Math.abs(Number(x.amount)||0)}
+function isAdvanceAdjustment(x){return x && x.type==='advanceAdjust'}
+function adjustmentTotal(advanceId, uptoMonth='9999-99'){
+ return sum((db.cashbook||[]).filter(x=>isAdvanceAdjustment(x)&&x.advanceId===advanceId&&String(x.date||'').slice(0,7)<=uptoMonth),x=>Math.abs(Number(x.amount)||0));
+}
+function advanceOutstanding(x, uptoMonth='9999-99'){
+ if(!x || !['advance','advancePaid'].includes(x.type) || String(x.date||'').slice(0,7)>uptoMonth) return 0;
+ return Math.max(0,Math.abs(Number(x.amount)||0)-adjustmentTotal(x.id,uptoMonth));
+}
+function outstandingAdvances(type, uptoMonth='9999-99'){
+ return sum((db.cashbook||[]).filter(x=>x.type===type),x=>advanceOutstanding(x,uptoMonth));
+}
+function populateAdvanceAdjustTargets(){
+ const sel=$('advanceAdjustTarget'); if(!sel)return;
+ const upto=m();
+ const candidates=(db.cashbook||[]).filter(x=>['advance','advancePaid'].includes(x.type)&&String(x.date||'').slice(0,7)<=upto)
+  .map(x=>({x,remaining:advanceOutstanding(x,upto)})).filter(v=>v.remaining>0.009)
+  .sort((a,b)=>b.x.date.localeCompare(a.x.date));
+ sel.innerHTML=candidates.map(v=>`<option value="${esc(v.x.id)}">${esc(v.x.date)} · ${v.x.type==='advance'?'Received':'Paid'} · ${esc(v.x.details||'Advance')} · বাকি ${money(v.remaining)}</option>`).join('');
+ if(!candidates.length)sel.innerHTML='<option value="">কোনো বাকি Advance নেই</option>';
+ $('advanceAdjustAmount').max=candidates.length?candidates[0].remaining:'';
+}
+function cashDebitAmount(x){return isCredit(x.type)||isAdvanceAdjustment(x)?0:Math.abs(Number(x.amount)||0)}
 function cashOpening(month){
- return sum((db.cashbook||[]).filter(x=>x.date.slice(0,7)<month),x=>isCredit(x.type)?x.amount:-Number(x.amount||0));
+ return sum((db.cashbook||[]).filter(x=>x.date.slice(0,7)<month&&!isAdvanceAdjustment(x)),x=>isCredit(x.type)?x.amount:-Number(x.amount||0));
 }
 function cashTotals(month){
- const list=(db.cashbook||[]).filter(x=>x.date.slice(0,7)===month);
+ const list=(db.cashbook||[]).filter(x=>x.date.slice(0,7)===month&&!isAdvanceAdjustment(x));
  const credit=sum(list.filter(x=>isCredit(x.type)),x=>x.amount), debit=sum(list.filter(x=>!isCredit(x.type)),x=>x.amount);
  return {opening:cashOpening(month),credit,debit,balance:cashOpening(month)+credit-debit};
 }
-function cashTypeLabel(t){return ({advance:'Advance Received',advancePaid:'Advance Paid',repayment:'Loan Repayment',otherCredit:'Other Credit',lent:'Money Lent',daily:'Daily Expense',otherDebit:'Other Debit'})[t]||t}
+function cashTypeLabel(t){return ({advance:'Advance Received',advancePaid:'Advance Paid',advanceAdjust:'Advance Adjusted',repayment:'Loan Repayment',otherCredit:'Other Credit',lent:'Money Lent',daily:'Daily Expense',otherDebit:'Other Debit'})[t]||t}
 
 function entries(){return db.entries.filter(x=>x.date.slice(0,7)===m())}
 function sum(list,fn){return list.reduce((s,x)=>s+Number(fn(x)||0),0)}
@@ -134,8 +155,8 @@ function renderReminders(){
 }
 function opts(){let html=activeItems().map(i=>`<option value="${i.id}">${esc(cat(i.catId)?.name||'')} — ${esc(i.name)} (${typeOf(i.id)==='investment'?'Investment':'Expense'})</option>`).join('');['itemCat','budgetItem','actualItem'].forEach(id=>$(id).innerHTML=id==='itemCat'?db.categories.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.type==='investment'?'Investment':'Expense'})</option>`).join(''):html)}
 function render(){
- opts();renderReminders();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
- let cb=cashTotals(m());let cbList=cashEntries();$('cbActivities').textContent=String(cbList.length);$('cbDailyExpense').textContent=money(sum(cbList,cashDebitAmount));$('cbTotalTransaction').textContent=money(sum(cbList,x=>Math.abs(Number(x.amount)||0)));$('advanceReceived').textContent=money(sum(cbList.filter(x=>x.type==='advance'),x=>x.amount));$('advancePaid').textContent=money(sum(cbList.filter(x=>x.type==='advancePaid'),x=>x.amount));$('advanceRemaining').textContent=money(sum(cbList.filter(x=>x.type==='advance'),x=>x.amount)-sum(cbList.filter(x=>x.type==='advancePaid'),x=>x.amount));
+ opts();populateAdvanceAdjustTargets();renderReminders();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
+ let cb=cashTotals(m());let cbList=cashEntries();const cashMovementList=cbList.filter(x=>!isAdvanceAdjustment(x));$('cbActivities').textContent=String(cashMovementList.length);$('cbDailyExpense').textContent=money(sum(cashMovementList,cashDebitAmount));$('cbTotalTransaction').textContent=money(sum(cashMovementList,x=>Math.abs(Number(x.amount)||0)));$('advanceReceived').textContent=money(outstandingAdvances('advance',m()));$('advancePaid').textContent=money(outstandingAdvances('advancePaid',m()));$('advanceRemaining').textContent=money(outstandingAdvances('advance',m())-outstandingAdvances('advancePaid',m()));
  let expItems=its.filter(i=>typeOf(i.id)==='expense'),invItems=its.filter(i=>typeOf(i.id)==='investment');
  const total=(arr,fn)=>sum(arr,fn);
  let eb=total(expItems,i=>bs[i.id]),ib=total(invItems,i=>bs[i.id]),ea=total(es.filter(x=>typeOf(x.itemId)==='expense'),x=>x.amount),ia=total(es.filter(x=>typeOf(x.itemId)==='investment'),x=>x.amount);
@@ -147,7 +168,7 @@ function render(){
  $('historyRows').innerHTML=[...es].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>{let i=item(x.itemId),c=cat(i?.catId),t=c?.type||'expense';return `<tr><td>${esc(x.date)}</td><td><span class="pill ${t==='investment'?'inv':''}">${t==='investment'?'Investment':'Expense'}</span></td><td>${esc(c?.name||'Removed')} / ${esc(i?.name||'Item')}</td><td>${esc(x.note)}</td><td class="num">${money(x.amount)}</td><td><button class="tiny danger" data-delete="${x.id}">Delete</button></td></tr>`}).join('')||'<tr><td colspan="6" class="empty">এই মাসে কোনো এন্ট্রি নেই।</td></tr>';
  const cs=[...cashEntries()].sort((a,b)=>a.date.localeCompare(b.date));
  let running=cb.opening;
- $('cashRows').innerHTML=cs.map(x=>{let cr=isCredit(x.type)?Number(x.amount):0,de=cr?0:Number(x.amount);running+=cr-de;return `<tr><td>${esc(x.date)}</td><td>${esc(x.details)}</td><td class="num">${money(x.amount)}</td><td class="num">${money(running)}</td><td><button class="tiny danger" data-cashdelete="${x.id}">Delete</button></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">এই মাসে কোনো Cashbook Entry নেই।</td></tr>';
+ $('cashRows').innerHTML=cs.map(x=>{let cr=isCredit(x.type)?Number(x.amount):0,de=(cr||isAdvanceAdjustment(x))?0:Number(x.amount);running+=cr-de;let detail=isAdvanceAdjustment(x)?`${esc(x.details)} <span class="pill">Advance Adjusted</span>`:esc(x.details);return `<tr><td>${esc(x.date)}</td><td>${detail}</td><td class="num">${money(x.amount)}</td><td class="num">${money(running)}</td><td><button class="tiny danger" data-cashdelete="${x.id}">Delete</button></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">এই মাসে কোনো Cashbook Entry নেই।</td></tr>';
 
 }
 $('catForm').onsubmit=e=>{e.preventDefault();let name=$('catName').value.trim(),type=$('catType').value;if(!name)return;if(db.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){alert('এই Category আগে থেকেই আছে।');return}db.categories.push({id:crypto.randomUUID(),name,type});e.target.reset();persist()};
@@ -155,12 +176,35 @@ $('itemForm').onsubmit=e=>{e.preventDefault();let catId=$('itemCat').value,name=
 $('budgetForm').onsubmit=e=>{e.preventDefault();let id=$('budgetItem').value,amount=Number($('budgetAmount').value);if(!id||amount<0)return;db.budgets[m()]??={};db.budgets[m()][id]=amount;let bi=item(id);if(bi)bi.fixedBudget=$('fixedBudget').checked&&typeOf(id)==='expense';e.target.reset();persist()};
 $('actualForm').onsubmit=e=>{e.preventDefault();let itemId=$('actualItem').value,date=$('date').value,amount=Number($('amount').value);if(!itemId||!date||amount<=0)return;db.entries.push({id:crypto.randomUUID(),itemId,date,amount,note:$('note').value.trim()});e.target.reset();$('date').value=today.toISOString().slice(0,10);persist()};
 document.addEventListener('click',e=>{let d=e.target.closest('[data-disable]'),x=e.target.closest('[data-delete]'),cx=e.target.closest('[data-cashdelete]');if(d&&confirm('Item-টি নতুন Entry-র তালিকা থেকে সরাবেন? পুরোনো হিসাব থাকবে।')){let i=item(d.dataset.disable);if(i)i.active=false;persist()}if(x&&confirm('এই Entry মুছে ফেলবেন?')){db.entries=db.entries.filter(v=>v.id!==x.dataset.delete);persist()}if(cx&&confirm('এই Cashbook Entry মুছে ফেলবেন?')){db.cashbook=(db.cashbook||[]).filter(v=>v.id!==cx.dataset.cashdelete);persist()}});
-$('cashForm').onsubmit=e=>{e.preventDefault();let date=$('cashDate').value,type=$('cashType').value,details=$('cashDetails').value.trim(),amount=Number($('cashAmount').value);if(!date||!details||amount<=0)return;db.cashbook??=[];db.cashbook.push({id:crypto.randomUUID(),date,type,details,amount,note:$('cashNote').value.trim()});e.target.reset();$('cashDate').value=today.toISOString().slice(0,10);persist()};
+$('cashType').onchange=()=>{
+ const adj=$('cashType').value==='advanceAdjust';
+ $('advanceAdjustFields').classList.toggle('hidden',!adj);
+ $('cashDetails').closest('div').classList.toggle('hidden',adj);
+ $('cashAmount').closest('div').classList.toggle('hidden',adj);
+ $('cashDetails').required=!adj;$('cashAmount').required=!adj;
+ if(adj){populateAdvanceAdjustTargets();$('advanceAdjustAmount').value='';}
+};
+$('advanceAdjustTarget').onchange=()=>{const x=(db.cashbook||[]).find(v=>v.id===$('advanceAdjustTarget').value);$('advanceAdjustAmount').max=x?advanceOutstanding(x,m()):'';};
+$('cashForm').onsubmit=e=>{
+ e.preventDefault();let date=$('cashDate').value,type=$('cashType').value;db.cashbook??=[];
+ if(type==='advanceAdjust'){
+  const target=(db.cashbook||[]).find(x=>x.id===$('advanceAdjustTarget').value);
+  const amount=Number($('advanceAdjustAmount').value),remaining=target?advanceOutstanding(target,date.slice(0,7)):0;
+  if(!date||!target||amount<=0||amount>remaining+0.009){alert('সঠিক Advance নির্বাচন করুন এবং বাকি টাকার বেশি Adjust করবেন না।');return;}
+  db.cashbook.push({id:crypto.randomUUID(),date,type,advanceId:target.id,details:`${target.type==='advance'?'Received':'Paid'} Advance · ${target.details||''}`,amount,note:$('cashNote').value.trim()});
+ }else{
+  let details=$('cashDetails').value.trim(),amount=Number($('cashAmount').value);
+  if(!date||!details||amount<=0)return;
+  db.cashbook.push({id:crypto.randomUUID(),date,type,details,amount,note:$('cashNote').value.trim()});
+ }
+ e.target.reset();$('advanceAdjustFields').classList.add('hidden');$('cashDetails').closest('div').classList.remove('hidden');$('cashAmount').closest('div').classList.remove('hidden');$('cashDetails').required=true;$('cashAmount').required=true;
+ $('cashDate').value=today.toISOString().slice(0,10);persist();
+};
 $('budgetItem').onchange=()=>{$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget};
 $('month').onchange=render;
 
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab))});
-$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.9',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
+$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.11',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
 $('restore').onclick=()=>$('file').click();
 $('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let j=JSON.parse(await f.text()),d=j.data;if(!d||!Array.isArray(d.categories)||!Array.isArray(d.items)||!d.budgets||!Array.isArray(d.entries))throw 0;d.cashbook??=[];d.cashbook=d.cashbook.filter(x=>x.type!=='salary');d.cashbookStartMonth='';d.cashbookInitialBalance=0;if(confirm('Restore করলে এই ডিভাইসের বর্তমান ডেটা Backup-এর ডেটা দিয়ে বদলে যাবে। আগে Backup রাখুন। চালাবেন?')){db=d;persist();alert('Restore সম্পন্ন হয়েছে।')}}catch(_){alert('সঠিক Budget App Backup JSON নির্বাচন করুন।')}e.target.value=''};
 $('cashCsv').onclick=()=>{let all=[...(db.cashbook||[])].filter(x=>x.type!=='salary').sort((a,b)=>a.date.localeCompare(b.date));let rows=[['Date','Details','Value','Note']];for(const x of all){rows.push([x.date,x.details,Number(x.amount),x.note||''])}let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'cashbook-all.csv')};

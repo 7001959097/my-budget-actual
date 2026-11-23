@@ -1,5 +1,5 @@
-My Budget vs Actual PWA v1.10
-
-Added an in-app reminder panel shown one day before a recurring payment date. Monthly reminders use an Actual Entry from the previous month; annual reminders use an Actual Entry from the same date in the previous year. Reminder matching is based on Item. Existing localStorage key and data structure are preserved.
-
-Important: This is an in-app reminder. The app must be opened to see it; it does not send a push notification while closed. Back up your data before replacing the deployed files.
+My Budget vs Actual PWA v1.11
+Advance outstanding tracking: outstanding Advance Received and Advance Paid stay on Dashboard until adjusted.
+Cashbook > Transaction Type > Advance Adjusted: select the original advance and enter a partial or full adjustment amount.
+Adjustment does not change cash balance, daily expense, total cash transactions, or cash activity count.
+Existing localStorage data key and data structure are retained. Take an in-app Backup before replacing files on GitHub Pages. Do not clear browser data.
