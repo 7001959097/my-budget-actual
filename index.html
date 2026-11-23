@@ -11,12 +11,12 @@ main{max-width:1120px;margin:18px auto;padding:0 14px 40px}.toolbar{display:grid
 label{display:block;font-size:13px;font-weight:650;margin-bottom:5px}input,select{width:100%;min-height:41px;padding:9px 10px;border:1px solid #cbd5cb;border-radius:9px;background:white;font:inherit}
 button{border:0;border-radius:9px;padding:10px 13px;min-height:39px;background:var(--g);color:white;font:inherit;font-weight:650;cursor:pointer}button.secondary{background:#e8f1e9;color:#14532d;border:1px solid #c9ddcb}button.danger{background:#fee2e2;color:#991b1b}button.tiny{min-height:29px;padding:5px 8px;font-size:12px}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px;box-shadow:0 2px 8px #18351b08}
-.cap{font-size:12px;color:var(--muted)}.value{font-size:22px;font-weight:800;margin-top:4px}.green{color:var(--g2)}.red{color:var(--red)}.blue{color:var(--blue)}
+.dashboard-grid .card{cursor:pointer;transition:transform .12s,box-shadow .12s}.dashboard-grid .card:hover{transform:translateY(-2px);box-shadow:0 5px 14px #18351b16}.dashboard-grid .card:focus{outline:2px solid var(--g2);outline-offset:2px}.cap{font-size:12px;color:var(--muted)}.value{font-size:22px;font-weight:800;margin-top:4px}.green{color:var(--g2)}.red{color:var(--red)}.blue{color:var(--blue)}
 .panel{margin-bottom:14px}.panel h2{font-size:17px;margin:0 0 12px}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.tabs button{background:#e8eee8;color:#314236}.tabs button.active{background:var(--g);color:white}
 .forms{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:9px 7px;border-bottom:1px solid var(--line)}th{font-size:12px;color:var(--muted)}.num{text-align:right;white-space:nowrap}.wrap{overflow-x:auto}.empty{text-align:center;color:var(--muted);padding:20px}.pill{display:inline-block;border-radius:99px;padding:3px 8px;font-size:11px;background:#edf7ee;color:#166534}.pill.inv{background:#eff6ff;color:#1d4ed8}.note{font-size:12px;color:var(--muted);margin-top:8px}.hidden{display:none!important}
 .progress{height:8px;background:#e8eee8;border-radius:99px;overflow:hidden;margin-top:7px}.progress span{display:block;height:100%;background:#16a34a;width:0}
-@media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}.forms{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.toolbar .month{grid-column:1/-1}}
+.modal-backdrop{position:fixed;inset:0;background:#10201599;display:none;align-items:center;justify-content:center;padding:14px;z-index:1000}.modal-backdrop.open{display:flex}.detail-modal{width:min(850px,100%);max-height:88vh;overflow:auto;background:white;border-radius:15px;padding:16px;box-shadow:0 15px 50px #0004}.detail-head{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:-16px;background:white;padding:4px 0 12px;z-index:1}.detail-head h2{margin:0;font-size:18px}.detail-table{min-width:560px}.detail-actions{display:flex;gap:6px;flex-wrap:wrap}.dashboard-grid .card:after{content:"বিস্তারিত দেখতে ক্লিক করুন";display:block;font-size:10px;color:var(--muted);margin-top:5px}@media(max-width:720px){.grid{grid-template-columns:repeat(2,1fr)}.forms{grid-template-columns:1fr}.toolbar{grid-template-columns:1fr 1fr}.toolbar .month{grid-column:1/-1}}
 @media(max-width:400px){.value{font-size:19px}.card,.panel{padding:11px}}
 </style></head>
 <body>
@@ -24,18 +24,18 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 <main>
 <div class="toolbar"><div class="month"><label>মাস নির্বাচন করুন</label><input id="month" type="month"></div><button class="secondary" id="backup">Backup</button><button class="secondary" id="restore">Restore</button><input id="file" type="file" accept=".json,application/json" class="hidden"></div>
 <div class="grid dashboard-grid">
-<div class="card"><div class="cap">Expenses Budget</div><div class="value" id="eb">₹0</div></div>
-<div class="card"><div class="cap">Expenses Actual</div><div class="value" id="ea">₹0</div></div>
-<div class="card"><div class="cap">Remaining Expenses Budget</div><div class="value green" id="er">₹0</div></div>
-<div class="card"><div class="cap">Investment Budget</div><div class="value blue" id="ib">₹0</div></div>
-<div class="card"><div class="cap">Investment Actual</div><div class="value blue" id="ia">₹0</div></div>
-<div class="card"><div class="cap">Remaining Investment Budget</div><div class="value blue" id="ir">₹0</div></div>
-<div class="card"><div class="cap">Advance Received</div><div class="value green" id="advanceReceived">₹0</div></div>
-<div class="card"><div class="cap">Advance Paid</div><div class="value red" id="advancePaid">₹0</div></div>
-<div class="card"><div class="cap">Remaining Advance</div><div class="value" id="advanceRemaining">₹0</div></div>
-<div class="card"><div class="cap">Daily Expenses</div><div class="value red" id="cbDailyExpense">₹0</div></div>
-<div class="card"><div class="cap">Total Transaction</div><div class="value" id="cbTotalTransaction">₹0</div></div>
-<div class="card"><div class="cap">Total Activities</div><div class="value blue" id="cbActivities">0</div></div>
+<div class="card" data-summary="expenseBudget" role="button" tabindex="0"><div class="cap">Expenses Budget</div><div class="value" id="eb">₹0</div></div>
+<div class="card" data-summary="expenseActual" role="button" tabindex="0"><div class="cap">Expenses Actual</div><div class="value" id="ea">₹0</div></div>
+<div class="card" data-summary="expenseRemaining" role="button" tabindex="0"><div class="cap">Remaining Expenses Budget</div><div class="value green" id="er">₹0</div></div>
+<div class="card" data-summary="investmentBudget" role="button" tabindex="0"><div class="cap">Investment Budget</div><div class="value blue" id="ib">₹0</div></div>
+<div class="card" data-summary="investmentActual" role="button" tabindex="0"><div class="cap">Investment Actual</div><div class="value blue" id="ia">₹0</div></div>
+<div class="card" data-summary="investmentRemaining" role="button" tabindex="0"><div class="cap">Remaining Investment Budget</div><div class="value blue" id="ir">₹0</div></div>
+<div class="card" data-summary="advanceReceived" role="button" tabindex="0"><div class="cap">Advance Received</div><div class="value green" id="advanceReceived">₹0</div></div>
+<div class="card" data-summary="advancePaid" role="button" tabindex="0"><div class="cap">Advance Paid</div><div class="value red" id="advancePaid">₹0</div></div>
+<div class="card" data-summary="advanceRemaining" role="button" tabindex="0"><div class="cap">Remaining Advance</div><div class="value" id="advanceRemaining">₹0</div></div>
+<div class="card" data-summary="dailyExpenses" role="button" tabindex="0"><div class="cap">Daily Expenses</div><div class="value red" id="cbDailyExpense">₹0</div></div>
+<div class="card" data-summary="totalTransaction" role="button" tabindex="0"><div class="cap">Total Transaction</div><div class="value" id="cbTotalTransaction">₹0</div></div>
+<div class="card" data-summary="totalActivities" role="button" tabindex="0"><div class="cap">Total Activities</div><div class="value blue" id="cbActivities">0</div></div>
 </div>
 <div class="panel" id="reminderPanel" style="display:none;border-color:#f0c36d;background:#fffaf0">
 <h2>আগামীকালের Reminder</h2><div id="reminderList"></div>
@@ -72,6 +72,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 </section>
 <p class="note">ডেটা এই Browser/ডিভাইসে সেভ হয়। PC ও Mobile-এর মধ্যে ডেটা নিতে Backup ও Restore ব্যবহার করুন। Restore করলে ওই ডিভাইসের বর্তমান ডেটা প্রতিস্থাপিত হবে।</p>
 </main>
+<div class="modal-backdrop" id="summaryModal" role="dialog" aria-modal="true" aria-labelledby="summaryTitle"><div class="detail-modal"><div class="detail-head"><div><h2 id="summaryTitle">Summary Details</h2><div class="note" id="summarySubtitle"></div></div><button class="secondary" id="closeSummary">বন্ধ করুন ✕</button></div><div class="wrap"><table class="detail-table"><thead id="summaryHead"></thead><tbody id="summaryBody"></tbody></table></div><p class="note" id="summaryFoot"></p></div></div>
 <script>
 (()=>{
 const $=id=>document.getElementById(id),KEY='budgetActual_v1_1';
@@ -158,13 +159,51 @@ function renderReminders(){
  list.innerHTML=matches.map(r=>`<div style="padding:9px 0;border-bottom:1px solid #f2dfb5"><strong>${esc(r.item.name)}</strong> <span class="pill ${typeOf(r.item.id)==='investment'?'inv':''}">${typeOf(r.item.id)==='investment'?'Investment':'Budget'}</span><div>${esc(r.category?.name||'')} · ${r.kind} · আগের পেমেন্ট: ${esc(r.date)} · Amount: ${money(r.amount)}</div><div class="note">আগামীকাল ${localDateString(tomorrow)} তারিখে পেমেন্টের কথা মনে রাখুন।</div></div>`).join('');
 }
 function opts(){let html=activeItems().map(i=>`<option value="${i.id}">${esc(cat(i.catId)?.name||'')} — ${esc(i.name)} (${typeOf(i.id)==='investment'?'Investment':'Expense'})</option>`).join('');['itemCat','budgetItem','actualItem'].forEach(id=>$(id).innerHTML=id==='itemCat'?db.categories.map(c=>`<option value="${c.id}">${esc(c.name)} (${c.type==='investment'?'Investment':'Expense'})</option>`).join(''):html)}
+let editingActualId=null,activeSummaryKey="";
+function showSummary(key){
+ activeSummaryKey=key;
+ const month=m(),bs=budgets(),es=entries(),its=activeItems();
+ const exp=its.filter(i=>typeOf(i.id)==='expense'),inv=its.filter(i=>typeOf(i.id)==='investment');
+ const actualRows=(type)=>es.filter(x=>typeOf(x.itemId)===type).sort((a,b)=>b.date.localeCompare(a.date));
+ const cash=cashEntries().filter(x=>!isAdvanceAdjustment(x));
+ let title='',heads=[],rows=[],foot='';
+ const tr=(cells)=>'<tr>'+cells.map(v=>'<td>'+v+'</td>').join('')+'</tr>';
+ const itemName=x=>{const i=item(x.itemId),c=cat(i?.catId);return esc(c?.name||'')+' / '+esc(i?.name||'Removed item')};
+ const actualTable=(arr)=>{heads=['Date','Category / Item','Note','Amount','Action'];rows=arr.map(x=>tr([esc(x.date),itemName(x),esc(x.note||''),'<span class="num">'+money(x.amount)+'</span>','<div class="detail-actions"><button class="tiny secondary" data-detail-edit="'+esc(x.id)+'">Edit</button><button class="tiny danger" data-detail-delete="'+esc(x.id)+'">Delete</button></div>']));};
+ const budgetTable=(arr)=>{heads=['Category / Item','Budget Amount'];rows=arr.filter(i=>bs[i.id]!==undefined).map(i=>tr([esc(cat(i.catId)?.name)+' / '+esc(i.name),'<span class="num">'+money(bs[i.id])+'</span>']));};
+ if(key==='expenseBudget'){title='Expenses Budget';budgetTable(exp)}
+ else if(key==='investmentBudget'){title='Investment Budget';budgetTable(inv)}
+ else if(key==='expenseActual'){title='Expenses Actual';actualTable(actualRows('expense'))}
+ else if(key==='investmentActual'){title='Investment Actual';actualTable(actualRows('investment'))}
+ else if(key==='expenseRemaining'||key==='investmentRemaining'){
+  const type=key==='expenseRemaining'?'expense':'investment',arr=type==='expense'?exp:inv;title=type==='expense'?'Remaining Expenses Budget':'Remaining Investment Budget';heads=['Category / Item','Budget','Actual','Remaining'];rows=arr.map(i=>{let b=Number(bs[i.id]||0),a=sum(es.filter(x=>x.itemId===i.id),x=>x.amount);return tr([esc(cat(i.catId)?.name)+' / '+esc(i.name),money(b),money(a),'<strong>'+money(b-a)+'</strong>'])});
+ }
+ else if(key==='advanceReceived'||key==='advancePaid'||key==='advanceRemaining'){
+  title=key==='advanceReceived'?'Advance Received — Outstanding':key==='advancePaid'?'Advance Paid — Outstanding':'Remaining Advance — Received vs Paid';
+  heads=['Date','Type','Person / Details','Original','Adjusted','Outstanding'];
+  const list=outstandingAdvanceRows(month).filter(v=>key==='advanceRemaining'||(key==='advanceReceived'?v.x.type==='advance':v.x.type==='advancePaid'));
+  rows=list.map(v=>tr([esc(v.x.date),v.x.type==='advance'?'Received':'Paid',esc(v.x.details||''),money(v.x.amount),money(v.adjusted),'<strong>'+money(v.remaining)+'</strong>']));
+  foot='আগের মাসের Advance-ও অন্তর্ভুক্ত। পুরো টাকা Adjust/ফেরত না হওয়া পর্যন্ত Outstanding থাকবে।';
+ }
+ else if(key==='dailyExpenses'){
+  title='Daily Expenses';heads=['Date','Details','Note','Amount'];rows=cash.filter(x=>cashDebitAmount(x)>0).map(x=>tr([esc(x.date),esc(x.details||cashTypeLabel(x.type)),esc(x.note||''),money(cashDebitAmount(x)),'<button class="tiny danger" data-cash-detail-delete="'+esc(x.id)+'">Delete</button>']));heads=['Date','Details','Note','Amount','Action'];
+ }
+ else if(key==='totalTransaction'){
+  title='Total Transaction';heads=['Date','Transaction','Details','Value','Action'];rows=cash.map(x=>tr([esc(x.date),esc(cashTypeLabel(x.type)),esc(x.details||''),money(Math.abs(Number(x.amount)||0)),'<button class="tiny danger" data-cash-detail-delete="'+esc(x.id)+'">Delete</button>']));foot='Advance Adjusted এন্ট্রি Cash Transaction নয়, তাই এখানে দেখানো হয়নি।';
+ }
+ else if(key==='totalActivities'){
+  title='Total Activities';heads=['Date','Activity','Details','Amount','Action'];rows=[...cash].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>tr([esc(x.date),esc(cashTypeLabel(x.type)),esc(x.details||''),money(x.amount),'<button class="tiny danger" data-cash-detail-delete="'+esc(x.id)+'">Delete</button>']));
+ }
+ $('summaryTitle').textContent=title;$('summarySubtitle').textContent='Selected Month: '+month;$('summaryHead').innerHTML='<tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr>';$('summaryBody').innerHTML=rows.join('')||'<tr><td colspan="'+heads.length+'" class="empty">এই মাসে কোনো Details পাওয়া যায়নি।</td></tr>';$('summaryFoot').textContent=foot;$('summaryModal').classList.add('open');
+}
+function closeSummary(){$('summaryModal').classList.remove('open')}
 function render(){
  opts();populateAdvanceAdjustTargets();renderReminders();if($('budgetItem').value)$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget;let its=activeItems(),bs=budgets(),es=entries();
  let cb=cashTotals(m());let cbList=cashEntries();const cashMovementList=cbList.filter(x=>!isAdvanceAdjustment(x));$('cbActivities').textContent=String(cashMovementList.length);$('cbDailyExpense').textContent=money(sum(cashMovementList,cashDebitAmount));$('cbTotalTransaction').textContent=money(sum(cashMovementList,x=>Math.abs(Number(x.amount)||0)));$('advanceReceived').textContent=money(outstandingAdvances('advance',m()));$('advancePaid').textContent=money(outstandingAdvances('advancePaid',m()));$('advanceRemaining').textContent=money(outstandingAdvances('advance',m())-outstandingAdvances('advancePaid',m()));
  let expItems=its.filter(i=>typeOf(i.id)==='expense'),invItems=its.filter(i=>typeOf(i.id)==='investment');
  const total=(arr,fn)=>sum(arr,fn);
  let eb=total(expItems,i=>bs[i.id]),ib=total(invItems,i=>bs[i.id]),ea=total(es.filter(x=>typeOf(x.itemId)==='expense'),x=>x.amount),ia=total(es.filter(x=>typeOf(x.itemId)==='investment'),x=>x.amount);
- $('eb').textContent=money(eb);$('ea').textContent=money(ea);$('ib').textContent=money(ib);$('ia').textContent=money(ia);$('er').textContent=money(eb-ea);$('ir').textContent=money(ib-ia);$('er').className='value '+(eb-ea<0?'red':'green');$('ir').className='value blue';$('out').textContent=money(ea+ia);$('count').textContent=its.length;
+ $('eb').textContent=money(eb);$('ea').textContent=money(ea);$('ib').textContent=money(ib);$('ia').textContent=money(ia);$('er').textContent=money(eb-ea);$('ir').textContent=money(ib-ia);$('er').className='value '+(eb-ea<0?'red':'green');$('ir').className='value blue';if($('out'))$('out').textContent=money(ea+ia);if($('count'))$('count').textContent=its.length;
  function table(arr){return arr.map(i=>{let b=Number(bs[i.id]||0),a=actual(i.id),r=b-a;return `<tr><td>${esc(cat(i.catId)?.name)} / ${esc(i.name)}</td><td class="num">${money(b)}</td><td class="num">${money(a)}</td><td class="num ${r<0?'red':'green'}">${money(r)}</td></tr>`}).join('')||'<tr><td colspan="4" class="empty">কোনো Item নেই। Category & Items থেকে তৈরি করুন।</td></tr>'}
  $('expenseOverview').innerHTML=table(expItems);$('investOverview').innerHTML=table(invItems);
  $('budgetRows').innerHTML=its.filter(i=>bs[i.id]!==undefined).map(i=>`<tr><td><span class="pill ${typeOf(i.id)==='investment'?'inv':''}">${typeOf(i.id)==='investment'?'Investment':'Expense'}</span></td><td>${esc(cat(i.catId)?.name)} / ${esc(i.name)}</td><td class="num">${money(bs[i.id])}</td></tr>`).join('')||'<tr><td colspan="3" class="empty">এই মাসে Budget দেওয়া হয়নি।</td></tr>';
@@ -180,8 +219,16 @@ function render(){
 $('catForm').onsubmit=e=>{e.preventDefault();let name=$('catName').value.trim(),type=$('catType').value;if(!name)return;if(db.categories.some(c=>c.name.toLowerCase()===name.toLowerCase())){alert('এই Category আগে থেকেই আছে।');return}db.categories.push({id:crypto.randomUUID(),name,type});e.target.reset();persist()};
 $('itemForm').onsubmit=e=>{e.preventDefault();let catId=$('itemCat').value,name=$('itemName').value.trim();if(!catId||!name)return;if(db.items.some(i=>i.catId===catId&&i.name.toLowerCase()===name.toLowerCase()&&i.active!==false)){alert('এই Category-তে Item-টি আগে থেকেই আছে।');return}db.items.push({id:crypto.randomUUID(),catId,name,active:true});e.target.reset();persist()};
 $('budgetForm').onsubmit=e=>{e.preventDefault();let id=$('budgetItem').value,amount=Number($('budgetAmount').value);if(!id||amount<0)return;db.budgets[m()]??={};db.budgets[m()][id]=amount;let bi=item(id);if(bi)bi.fixedBudget=$('fixedBudget').checked&&typeOf(id)==='expense';e.target.reset();persist()};
-$('actualForm').onsubmit=e=>{e.preventDefault();let itemId=$('actualItem').value,date=$('date').value,amount=Number($('amount').value);if(!itemId||!date||amount<=0)return;db.entries.push({id:crypto.randomUUID(),itemId,date,amount,note:$('note').value.trim()});e.target.reset();$('date').value=today.toISOString().slice(0,10);persist()};
+$('actualForm').onsubmit=e=>{e.preventDefault();let itemId=$('actualItem').value,date=$('date').value,amount=Number($('amount').value);if(!itemId||!date||amount<=0)return;let data={itemId,date,amount,note:$('note').value.trim()};if(editingActualId){let x=db.entries.find(v=>v.id===editingActualId);if(x)Object.assign(x,data);editingActualId=null;e.target.querySelector('button[type=submit],button:not([type])').textContent='Save Entry'}else db.entries.push({id:crypto.randomUUID(),...data});e.target.reset();$('date').value=today.toISOString().slice(0,10);persist()};
 document.addEventListener('click',e=>{let d=e.target.closest('[data-disable]'),x=e.target.closest('[data-delete]'),cx=e.target.closest('[data-cashdelete]');if(d&&confirm('Item-টি নতুন Entry-র তালিকা থেকে সরাবেন? পুরোনো হিসাব থাকবে।')){let i=item(d.dataset.disable);if(i)i.active=false;persist()}if(x&&confirm('এই Entry মুছে ফেলবেন?')){db.entries=db.entries.filter(v=>v.id!==x.dataset.delete);persist()}if(cx&&confirm('এই Cashbook Entry মুছে ফেলবেন?')){db.cashbook=(db.cashbook||[]).filter(v=>v.id!==cx.dataset.cashdelete);persist()}});
+document.querySelectorAll('[data-summary]').forEach(card=>{card.addEventListener('click',()=>showSummary(card.dataset.summary));card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showSummary(card.dataset.summary)}})});
+$('closeSummary').onclick=closeSummary;$('summaryModal').addEventListener('click',e=>{if(e.target===$('summaryModal'))closeSummary()});
+document.addEventListener('click',e=>{
+ const edit=e.target.closest('[data-detail-edit]'),del=e.target.closest('[data-detail-delete]'),cashDel=e.target.closest('[data-cash-detail-delete]');
+ if(cashDel&&confirm('এই Cashbook Entry মুছে ফেলবেন?')){db.cashbook=(db.cashbook||[]).filter(v=>v.id!==cashDel.dataset.cashDetailDelete);persist();showSummary(activeSummaryKey||'totalTransaction');}
+ if(edit){const x=db.entries.find(v=>v.id===edit.dataset.detailEdit);if(!x)return;editingActualId=x.id;$('date').value=x.date;$('actualItem').value=x.itemId;$('amount').value=x.amount;$('note').value=x.note||'';$('actualForm').querySelector('button[type="submit"],button:not([type])').textContent='Update Entry';document.querySelector('[data-tab="entry"]').click();closeSummary();}
+ if(del&&confirm('এই Actual Entry মুছে ফেলবেন?')){db.entries=db.entries.filter(v=>v.id!==del.dataset.detailDelete);persist();showSummary(document.querySelector('#summaryTitle').textContent.includes('Investment')?'investmentActual':'expenseActual');}
+});
 $('cashType').onchange=()=>{
  const adj=$('cashType').value==='advanceAdjust';
  $('advanceAdjustFields').classList.toggle('hidden',!adj);
@@ -207,10 +254,10 @@ $('cashForm').onsubmit=e=>{
  $('cashDate').value=today.toISOString().slice(0,10);persist();
 };
 $('budgetItem').onchange=()=>{$('fixedBudget').checked=!!item($('budgetItem').value)?.fixedBudget};
-$('month').onchange=render;
+$('month').onchange=render;$('actualForm').addEventListener('reset',()=>{editingActualId=null;setTimeout(()=>{let b=$('actualForm').querySelector('button[type=submit],button:not([type])');if(b)b.textContent='Save Entry'},0)});
 
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('hidden',x.id!==b.dataset.tab))});
-$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.11',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
+$('backup').onclick=()=>download(new Blob([JSON.stringify({app:'My Budget vs Actual',version:'1.13',data:db},null,2)],{type:'application/json'}),'budget-backup-'+m()+'.json');
 $('restore').onclick=()=>$('file').click();
 $('file').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let j=JSON.parse(await f.text()),d=j.data;if(!d||!Array.isArray(d.categories)||!Array.isArray(d.items)||!d.budgets||!Array.isArray(d.entries))throw 0;d.cashbook??=[];d.cashbook=d.cashbook.filter(x=>x.type!=='salary');d.cashbookStartMonth='';d.cashbookInitialBalance=0;if(confirm('Restore করলে এই ডিভাইসের বর্তমান ডেটা Backup-এর ডেটা দিয়ে বদলে যাবে। আগে Backup রাখুন। চালাবেন?')){db=d;persist();alert('Restore সম্পন্ন হয়েছে।')}}catch(_){alert('সঠিক Budget App Backup JSON নির্বাচন করুন।')}e.target.value=''};
 $('cashCsv').onclick=()=>{let all=[...(db.cashbook||[])].filter(x=>x.type!=='salary').sort((a,b)=>a.date.localeCompare(b.date));let rows=[['Date','Details','Value','Note']];for(const x of all){rows.push([x.date,x.details,Number(x.amount),x.note||''])}let csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download(new Blob([csv],{type:'text/csv;charset=utf-8'}),'cashbook-all.csv')};
